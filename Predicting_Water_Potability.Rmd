@@ -1,0 +1,11 @@
+---
+title: "Predicting Water Potability"
+author: "Romain Kursner & Adrien Kühne"
+date: "11/18/2021"
+output: html_document
+---
+
+```{r}
+df = read.csv("water_potability.csv")
+```
+
