@@ -5,7 +5,196 @@ date: "11/18/2021"
 output: html_document
 ---
 
+### Loading the data set : 
 ```{r}
+rm(list = ls())
 df = read.csv("water_potability.csv")
 ```
+
+### Loading our libraries :
+```{r}
+library(naniar)
+library(ggplot2)
+library(tidyverse)
+library(plotly)
+library(rpart)
+library(rpart.plot)
+library(forecast) ### forcast accuracy
+library(caret)
+library(cowplot)
+library(hrbrthemes) ### nice ggplot themes
+library(mice)
+```
+
+##### Now that we have loaded our data set, a good thing to do is to look at our variables and how our data set is constructed.
+```{r}
+str(df)
+```
+
+As you can see, our data set has 3276 observations and 10 variables. They are all numerical values except Potability which is an integer. It is normal since Potability indicates if our water is either potable or not. We will need to transform it into a factor later on. We can already see some missing values.
+
+```{r}
+summary(df)
+```
+
+Here we can see the minimum, maximum, mean and median of all our variables. What is really important to notice is that we have 491 missing values in ph, 781 in Sulfate and 162 in Trihalomethanes. We will need to find a good strategy to deal with them.
+
+A good question now is to ask ourselves if we have a balanced data since we are going to classify our water based on the Potability variable.
+```{r}
+potable_amount = sum(df$Potability == 1)/nrow(df)
+notpotable_amount = sum(df$Potability == 0) / nrow(df)
+pot_perc = paste0(round(potable_amount,4)*100, "% : Potable")
+notpot_perc = paste0(round(notpotable_amount,4)*100, "% : Non-Potable")
+
+amount = data.frame("Group" =c("Potable","Non-Potable"),"Percentage"=c(potable_amount, notpotable_amount), "Labels" = c(pot_perc,notpot_perc))
+
+pie_chart = ggplot(amount, aes(x = "", y = Percentage, fill = Group)) +
+  geom_col(color = "black") +
+  geom_label(aes(label = Labels), color = c(1, "white"),
+            position = position_stack(vjust = 0.5),
+            show.legend = FALSE) +
+  guides(fill = guide_legend(title = "Quality of the Water"))+
+  scale_fill_viridis_d() +
+  coord_polar(theta = "y") + labs(title = "Proportion of Potable and Non-Potable Water") +
+  theme_void()
+
+amount$total = c(sum(df$Potability == 1),sum(df$Potability == 0))
+
+bar_chart = ggplot(amount, aes(x = Group, y = total, fill = Group)) + geom_bar(stat = "identity") + labs(title = "Quantity of good and bad water in our data set", x = "Water Quality", y = "Total amount")
+
+plot_grid(pie_chart, bar_chart, labels = "AUTO")
+
+```
+
+We can see that we have more non-potable the potable water. In general even if we have more non-potable water, our data set is pretty balanced. We have 1278 Potable and 1998 non-potable water.
+
+I think that now is a good time to look deeper at our variables : 
+let's look at the distribution of our variables using a boxplot first : 
+```{r, fig.height=9, fig.width=9}
+par(mfrow=c(3,3))
+for (i in seq(1:9)) {
+  avg_0 = mean(df[df$Potability == 0, i],na.rm = TRUE)
+  avg_1 = mean(df[df$Potability == 1, i],na.rm = TRUE)
+  means = c(avg_0, avg_1)
+  boxplot(df[,i]~df$Potability, main = paste(colnames(df[i])), xlab = "Water Quality", ylab = colnames(df[i]), col = c("#69b3a2", "#404080"))
+  points(1:2,means, col = "red", pch = 19)
+  legend("topright",legend="Means", col = "red", pch =19)
+  
+}
+```
+
+The distribution of both our potable and non potable water seems pretty similar. It's weird. Looking at ph for example we can see that some drinkable water had ph of 12 and even 4 which is not really possible. There's something weird going and with this data set. Let's good a bit deeper into our exploratory analysis using a histogram.
+
+```{r}
+ggplot(df, aes(x=ph, fill=factor(Potability))) +
+    geom_histogram( color="#e9ecef", alpha=0.6, position = 'identity') +
+    scale_fill_manual(values=c("#69b3a2", "#404080"), labels = c("Non-potable","Potable")) +
+    geom_vline(aes(xintercept = median(df$ph, na.rm=T), color="median")) +
+    geom_vline(aes(xintercept = mean(df$ph,na.rm = T), color ="mean")) +
+    scale_color_manual(values = c("red","blue"))  +
+    theme_ipsum() +
+    labs(fill="Quality of the water", title= "Distribution of ph for good and bad water", color = "Mean and median")
+
+```
+
+
+```{r}
+ggplot(df, aes(x=Hardness, fill=factor(Potability))) +
+    geom_histogram( color="#e9ecef", alpha=0.6, position = 'identity') +
+    scale_fill_manual(values=c("#69b3a2", "#404080"), labels = c("Non-potable","Potable")) +
+    geom_vline(aes(xintercept = median(df$Hardness, na.rm=T), color="median")) +
+    geom_vline(aes(xintercept = mean(df$Hardness,na.rm = T), color ="mean")) +
+    scale_color_manual(values = c("red","blue"))  +
+    theme_ipsum() +
+    labs(fill="Quality of the water", title= "Distribution of Hardness for good and bad water", color = "Mean and median")
+#median(df$Hardness, na.rm=T)
+#mean(df$Hardness,na.rm = T)
+```
+
+```{r}
+ggplot(df, aes(x=Solids, fill=factor(Potability))) +
+    geom_histogram( color="#e9ecef", alpha=0.6, position = 'identity') +
+    scale_fill_manual(values=c("#69b3a2", "#404080"), labels = c("Non-potable","Potable")) +
+    geom_vline(aes(xintercept = median(df$Solids, na.rm=T), color="median")) +
+    geom_vline(aes(xintercept = mean(df$Solids,na.rm = T), color ="mean")) +
+    scale_color_manual(values = c("red","blue"))  +
+    theme_ipsum() +
+    labs(fill="Quality of the water", title= "Distribution of Solids for good and bad water", color = "Mean and median")
+
+```
+
+```{r}
+ggplot(df, aes(x=Chloramines, fill=factor(Potability))) +
+    geom_histogram( color="#e9ecef", alpha=0.6, position = 'identity') +
+    scale_fill_manual(values=c("#69b3a2", "#404080"), labels = c("Non-potable","Potable")) +
+    geom_vline(aes(xintercept = median(df$Chloramines, na.rm=T), color="median")) +
+    geom_vline(aes(xintercept = mean(df$Chloramines,na.rm = T), color ="mean")) +
+    scale_color_manual(values = c("red","blue"))  +
+    theme_ipsum() +
+    labs(fill="Quality of the water", title= "Distribution of Chloramines for good and bad water", color = "Mean and median")
+
+```
+
+```{r}
+ggplot(df, aes(x=Sulfate, fill=factor(Potability))) +
+    geom_histogram( color="#e9ecef", alpha=0.6, position = 'identity') +
+    scale_fill_manual(values=c("#69b3a2", "#404080"), labels = c("Non-potable","Potable")) +
+    geom_vline(aes(xintercept = median(df$Sulfate, na.rm=T), color="median")) +
+    geom_vline(aes(xintercept = mean(df$Sulfate,na.rm = T), color ="mean")) +
+    scale_color_manual(values = c("red","blue"))  +
+    theme_ipsum() +
+    labs(fill="Quality of the water", title= "Distribution of Sulfate for good and bad water", color = "Mean and median")
+
+```
+
+```{r}
+ggplot(df, aes(x=Conductivity, fill=factor(Potability))) +
+    geom_histogram( color="#e9ecef", alpha=0.6, position = 'identity') +
+    scale_fill_manual(values=c("#69b3a2", "#404080"), labels = c("Non-potable","Potable")) +
+    geom_vline(aes(xintercept = median(df$Conductivity, na.rm=T), color="median")) +
+    geom_vline(aes(xintercept = mean(df$Conductivity,na.rm = T), color ="mean")) +
+    scale_color_manual(values = c("red","blue"))  +
+    theme_ipsum() +
+    labs(fill="Quality of the water", title= "Distribution of Conductivity for good and bad water", color = "Mean and median")
+
+```
+
+```{r}
+ggplot(df, aes(x=Organic_carbon, fill=factor(Potability))) +
+    geom_histogram( color="#e9ecef", alpha=0.6, position = 'identity') +
+    scale_fill_manual(values=c("#69b3a2", "#404080"), labels = c("Non-potable","Potable")) +
+    geom_vline(aes(xintercept = median(df$Organic_carbon, na.rm=T), color="median")) +
+    geom_vline(aes(xintercept = mean(df$Organic_carbon,na.rm = T), color ="mean")) +
+    scale_color_manual(values = c("red","blue"))  +
+    theme_ipsum() +
+    labs(fill="Quality of the water", title= "Distribution of Organic carbon for good and bad water", color = "Mean and median")
+
+```
+
+```{r}
+ggplot(df, aes(x=Trihalomethanes, fill=factor(Potability))) +
+    geom_histogram( color="#e9ecef", alpha=0.6, position = 'identity') +
+    scale_fill_manual(values=c("#69b3a2", "#404080"), labels = c("Non-potable","Potable")) +
+    geom_vline(aes(xintercept = median(df$Trihalomethanes, na.rm=T), color="median")) +
+    geom_vline(aes(xintercept = mean(df$Trihalomethanes,na.rm = T), color ="mean")) +
+    scale_color_manual(values = c("red","blue"))  +
+    theme_ipsum() +
+    labs(fill="Quality of the water", title= "Distribution of Trihalomethanes for good and bad water", color = "Mean and median")
+
+```
+
+```{r}
+ggplot(df, aes(x=Turbidity, fill=factor(Potability))) +
+    geom_histogram( color="#e9ecef", alpha=0.6, position = 'identity') +
+    scale_fill_manual(values=c("#69b3a2", "#404080"), labels = c("Non-potable","Potable")) +
+    geom_vline(aes(xintercept = median(df$Turbidity, na.rm=T), color="median")) +
+    geom_vline(aes(xintercept = mean(df$Turbidity,na.rm = T), color ="mean")) +
+    scale_color_manual(values = c("red","blue"))  +
+    theme_ipsum() +
+    labs(fill="Quality of the water", title= "Distribution of Turbidity for good and bad water", color = "Mean and median")
+
+```
+
+
+
 
