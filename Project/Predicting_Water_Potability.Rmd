@@ -13,17 +13,19 @@ df = read.csv("water_potability.csv")
 
 ### Loading our libraries :
 ```{r}
-library(naniar)
-library(ggplot2)
+library(naniar) #### missing values graph
+library(ggplot2) ### plotting library
 library(tidyverse)
-library(plotly)
+library(plotly) #### nice interactive graph
 library(rpart)
 library(rpart.plot)
 library(forecast) ### forcast accuracy
-library(caret)
-library(cowplot)
+library(caret) ### confusion matrix, CV, preprocess and more
+library(cowplot) ## multiple ggplot subplot
 library(hrbrthemes) ### nice ggplot themes
-library(mice)
+library(mice) ### missing valiues 
+library(pheatmap) ### Nice heatmaps
+library(fmsb) ### Radar chart
 ```
 
 ##### Now that we have loaded our data set, a good thing to do is to look at our variables and how our data set is constructed.
@@ -60,7 +62,8 @@ pie_chart = ggplot(amount, aes(x = "", y = Percentage, fill = Group)) +
 
 amount$total = c(sum(df$Potability == 1),sum(df$Potability == 0))
 
-bar_chart = ggplot(amount, aes(x = Group, y = total, fill = Group)) + geom_bar(stat = "identity") + labs(title = "Quantity of good and bad water in our data set", x = "Water Quality", y = "Total amount")
+bar_chart = ggplot(amount, aes(x = Group, y = total, fill = Group)) + geom_bar(stat = "identity") +
+  scale_fill_viridis_d() + labs(title = "Quantity of good and bad water in our data set", x = "Water Quality", y = "Total amount", fill = "Water Quality")
 
 plot_grid(pie_chart, bar_chart, labels = "AUTO")
 
@@ -194,6 +197,363 @@ ggplot(df, aes(x=Turbidity, fill=factor(Potability))) +
     labs(fill="Quality of the water", title= "Distribution of Turbidity for good and bad water", color = "Mean and median")
 
 ```
+
+
+
+Now let's look at the difference between our Potable and non-potable water using their mean, maximum and minimum value.
+```{r, fig.width=8, fig.height=8}
+
+par(mfrow=c(1,2))
+
+df_1 = df[df$Potability == 1,]
+df_0 = df[df$Potability == 0,]
+
+#### to to put max min and the value
+
+rad_1 = data.frame(ph = c(max(df_1$ph, na.rm = T),0,mean(df_1$ph, na.rm=T)),
+                   Hardness = c(max(df_1$Hardness),0,mean(df_1$Hardness, na.rm=T)),
+                   Solids = c(max(df_1$Solids),0,mean(df_1$Solids, na.rm=T)),
+                   Chloramines = c(max(df_1$Chloramines),0,mean(df_1$Chloramines, na.rm=T)),
+                   Sulfate = c(max(df_1$Sulfate, na.rm = T),0,mean(df_1$Sulfate, na.rm=T)),
+                   Conductivity = c(max(df_1$Conductivity),0,mean(df_1$Conductivity, na.rm=T)),
+                   Organic_Carbon = c(max(df_1$Organic_carbon),0,mean(df_1$Organic_carbon, na.rm=T)),
+                   Trihalomethanes = c(max(df_1$Trihalomethanes,na.rm=T),0,mean(df_1$Trihalomethanes, na.rm=T)),
+                   Turbidity = c(max(df_1$Turbidity),0,mean(df_1$Turbidity, na.rm=T))
+  
+                   )
+
+rad_2 = data.frame(ph = c(max(df_0$ph, na.rm = T),0,mean(df_0$ph, na.rm=T)),
+                   Hardness = c(max(df_0$Hardness),0,mean(df_0$Hardness, na.rm=T)),
+                   Solids = c(max(df_0$Solids),0,mean(df_0$Solids, na.rm=T)),
+                   Chloramines = c(max(df_0$Chloramines),0,mean(df_0$Chloramines, na.rm=T)),
+                   Sulfate = c(max(df_0$Sulfate, na.rm = T),0,mean(df_0$Sulfate, na.rm=T)),
+                   Conductivity = c(max(df_0$Conductivity),0,mean(df_0$Conductivity, na.rm=T)),
+                   Organic_Carbon = c(max(df_0$Organic_carbon),0,mean(df_0$Organic_carbon, na.rm=T)),
+                   Trihalomethanes = c(max(df_0$Trihalomethanes,na.rm=T),0,mean(df_0$Trihalomethanes, na.rm=T)),
+                   Turbidity = c(max(df_0$Turbidity),0,mean(df_0$Turbidity, na.rm=T))
+
+                   )
+
+# Color vector
+colors_border=c( rgb(0.2,0.5,0.5,0.9), rgb(0.8,0.2,0.5,0.9) , rgb(0.7,0.5,0.1,0.9) )
+colors_in=c( rgb(0.2,0.5,0.5,0.4), rgb(0.8,0.2,0.5,0.4) , rgb(0.7,0.5,0.1,0.4) )
+
+radarchart(rad_1  , axistype=1 ,
+ #custom polygon
+    pcol=colors_border , pfcol=colors_in , plwd=4 , plty=1,
+    #custom the grid
+    cglcol="grey", cglty=1, axislabcol="grey", cglwd=0.8,
+    #custom labels
+    vlcex=0.8 , title = "Potable Water"
+    
+    )
+
+radarchart(rad_2  , axistype=1 ,
+ #custom polygon
+    pcol=colors_border , pfcol=colors_in , plwd=4 , plty=1,
+    #custom the grid
+    cglcol="grey", cglty=1, axislabcol="grey", cglwd=0.8,
+    #custom labels
+    vlcex=0.8 , title = "Not Potable Water"
+    
+    )
+```
+
+Here we used the maximum and 0 for Potability  = 1 and potability = 0 as the range of the of the radar chart. We used the mean of each feature for potability = 1 and 0 to represent their characteristics. We can see that there's not that much difference between them
+
+
+```{r}
+new_rad = data.frame(ph = c(max(df$ph, na.rm = T),0,mean(df_0$ph, na.rm=T),mean(df_1$ph, na.rm=T)),
+                   Hardness = c(max(df_0$Hardness),0,mean(df_0$Hardness, na.rm=T),mean(df_1$Hardness, na.rm=T)),
+                   Solids = c(max(df_0$Solids),0,mean(df_0$Solids, na.rm=T),mean(df_1$Solids, na.rm=T)),
+                   Chloramines = c(max(df_0$Chloramines),0,mean(df_0$Chloramines, na.rm=T),mean(df_1$Chloramines, na.rm=T)),
+                   Sulfate = c(max(df_0$Sulfate, na.rm = T),0,mean(df_0$Sulfate, na.rm=T),mean(df_1$Sulfate, na.rm=T)),
+                   Conductivity = c(max(df_0$Conductivity),0,mean(df_0$Conductivity, na.rm=T),mean(df_1$Conductivity, na.rm=T)),
+                   Organic_Carbon = c(max(df_0$Organic_carbon),0,mean(df_0$Organic_carbon, na.rm=T),mean(df_1$Organic_carbon, na.rm=T)),
+                   Trihalomethanes = c(max(df_0$Trihalomethanes,na.rm=T),0,mean(df_0$Trihalomethanes, na.rm=T),mean(df_1$Trihalomethanes,na.rm=T)),
+                   Turbidity = c(max(df_0$Turbidity),0,mean(df_0$Turbidity, na.rm=T),mean(df_1$Turbidity, na.rm=T))
+
+                   )
+
+row.names(new_rad)[3:4] = c("Not Potable", "Potable")
+
+
+# Color vector
+colors_border=c( rgb(0.2,0.5,0.5,0.9), rgb(0.8,0.2,0.5,0.9) )
+colors_in=c( rgb(0.2,0.5,0.5,0.4), rgb(0.8,0.2,0.5,0.4))
+
+# plot with default options:
+radarchart( new_rad  , axistype=1 , 
+    #custom polygon
+    pcol=colors_border , pfcol=colors_in , plwd=4 , plty=1,
+    #custom the grid
+    cglcol="grey", cglty=1, axislabcol="grey", cglwd=0.8,
+    #custom labels
+    vlcex=0.8 
+    )
+
+# Add a legend
+legend(x=0.7, y=1, legend = rownames(new_rad[-c(1,2),]), bty = "n", pch=20 , col=colors_in , text.col = "grey", cex=1.2, pt.cex=3)
+new_rad
+
+```
+
+In reality, we can see that there's not really a difference between bad and good water which is weird ! We would expect at least some difference in some features.
+
+let's look at the correlation of our variables : 
+```{r}
+pheatmap(cor(df, use = "complete"), display_numbers = T,cluster_rows = F, cluster_cols = F, fontsize_number = 15)
+```
+
+They are not correlated at all between each other meaning that we won't have an issue of multicolinearity ! 
+
+#### Now let's look at our missing values :
+```{r}
+gg_miss_var(df, show_pct = TRUE)
+```
+
+Without dropping missing values :3276 obs, 10 variables, Potability = 1 : 1278, 0: 1998
+dropping values : 2011 obs, 10 variables, potability = 1 811, 0, 1200 
+We lose 1265 obs. It seems that we more missing values in potability = 0
+Around 23 % of our Sulfate observations have missing values and 15% for ph which is a lot ! We only have 5% of missing values for Trihalomethanes which is already better than the other but still. We will need to deal with those missing values and try to find the best method :
+- Drop them
+- Keep them
+- Impute them by the median
+- impute them using K-NN.
+
+
+First let's look if the missing values have a pattern :
+
+
+
+```{r}
+library(missRanger)
+library(dlookr)
+plot_na_intersect(df)
+```
+
+```{r}
+plot_na_pareto(df)
+```
+
+```{r}
+md.pattern(df,rotate.names = TRUE, plot=TRUE)
+```
+
+```{r}
+library(visdat)
+vis_miss(df)
+```
+
+Well it's hard to say but it looks like the missing observations are missing at random. They don't really follow a pattern.
+
+#### We will now need to think to either drop those missing values or to impute them. We will use different imputation techniques on a train set so that we avoid data leackage and we will use a 5 cross validation to validate our results.
+
+Partitioning our data: we will use the stratified sampling method because I want to ensure that i have the same proportion of water quality in each of our samples. We will create a train set that represents 60% our of data and a validation set that will represents 40 % of our data.
+```{r}
+set.seed(1)
+df$Potability = as.factor(df$Potability) ### changing our Potability variables into a factor since it's a category ! 
+train.index = createDataPartition(df$Potability, p = .6, list = FALSE)
+train.set = df[ train.index,] ### 60%
+val.set= df[-train.index,]
+```
+
+```{r}
+head(train.set)
+```
+
+#### Cross validation with 5 folds for imputation : We are going to use a decision tree since they handle missing values 
+
+Here without dropping our missing values 
+```{r}
+set.seed(1) 
+
+tr_control = trainControl(method = "cv",number = 5 ,summaryFunction =  multiClassSummary) # Setting 5 fold cross-validation
+
+normal_cv_tree = train(Potability ~ ., #. is to tell that we use all our variables as predictors on personal loan
+               data = train.set,    ## on our training data
+               method = "rpart",    ### we use classification tree
+               na.action = na.pass,
+               preProcess = c("center","scale"),
+               trControl = tr_control)   ### the cross validation on 10 folds  ### on 30 k
+               #,metric = "Kappa"# We can play with metrics to select one specific but here I want them all
+               
+print(normal_cv_tree)
+accu1 = max(normal_cv_tree$results$Accuracy)
+f11 = max(normal_cv_tree$results$F1)
+#results = data.frame("Accuracy" = accu1, )
+```
+
+
+CV : Using median imputation 
+```{r}
+set.seed(1) ### To have the same results  !!! 
+
+tr_control = trainControl(method = "cv",number = 5 ,summaryFunction =  multiClassSummary) ### use cross validation 10 times on 10 different fold and have a summary of all metrics and having a preprocess step of imputing the median to see if it works well
+
+median_cv_tree = train(Potability ~ ., #. is to tell that we use all our variables as predictors on personal loan
+               data = train.set,    ## on our training data
+               method = "rpart",    ### we use classification tree
+               na.action = na.pass,
+               trControl = tr_control,
+               preProcess = c("medianImpute","center","scale"))   ### the cross validation on 10 folds  ### on 30 k
+               #,metric = "Kappa"# We can play with metrics to select one specific but here I want them all
+               
+print(median_cv_tree)
+
+med_acc = max(median_cv_tree$results$Accuracy)
+med_f1 = max(median_cv_tree$results$F1)
+```
+
+K-NN imputation method during our cross-validation
+```{r}
+set.seed(1) 
+
+tr_control = trainControl(method = "cv",number = 5 ,summaryFunction =  multiClassSummary) 
+
+knnimpute_cv_tree = train(Potability ~ ., #. is to tell that we use all our variables as predictors on personal loan
+               data = train.set,    ## on our training data
+               method = "rpart",    ### we use classification tree
+               na.action = na.pass,
+               trControl = tr_control,
+               preProcess = c("knnImpute","center","scale"))   ### the cross validation on 10 folds  ### on 30 k
+               #,metric = "Kappa"# We can play with metrics to select one specific but here I want them all
+               
+print(knnimpute_cv_tree)
+
+knn_acc = max(knnimpute_cv_tree$results$Accuracy)
+knn_f1 = max(knnimpute_cv_tree$results$F1)
+```
+
+```{r}
+set.seed(1) ### To have the same results  !!! 
+
+train.set2 = na.omit(train.set)
+
+tr_control = trainControl(method = "cv",number = 5 ,summaryFunction =  multiClassSummary) ### use cross validation 10 times on 10 different fold and have a summary of all metrics and having a preprocess step of imputing the median to see if it works well
+
+drop_cv_tree = train(Potability ~ ., #. is to tell that we use all our variables as predictors on personal loan
+               data = train.set2,    ## on our training data
+               method = "rpart",    ### we use classification tree
+               na.action = na.pass,
+               preProcess = c("center","scale"),
+               trControl = tr_control)   ### the cross validation on 10 folds  ### on 30 k
+               #,metric = "Kappa"# We can play with metrics to select one specific but here I want them all
+               
+print(drop_cv_tree)
+
+drop_acc = max(drop_cv_tree$results$Accuracy)
+drop_f1 = max(drop_cv_tree$results$F1)
+```
+
+```{r}
+results_cv_impute = data.frame("Accuracy" = c(accu1, med_acc, knn_acc, drop_acc), "F1 Score" = c(f11, med_f1, knn_f1, drop_f1),"Method" = c("No dropping","Median imputation","K-NN imputation","Dropping"))
+
+results_cv_impute %>% gather(Attributes, Values, 1:2) %>% ggplot(aes(x = Attributes, y = Values, fill = Method)) + scale_fill_viridis_d() + geom_bar(stat = "identity",position = "dodge") + geom_text(mapping= aes(x = Attributes, y=Values,label = round(Values,4)), vjust=-0.5, size = 2,position = position_dodge(width = .9), col = "red") + labs(title = "Comparaison of Missing values imputation : Dropping, keeping, imputing with median or K-NN", x = "Metrics") + theme_light()
+```
+
+
+Looking at those results it seems that knn imputation did the best in accuracy and F1 score compared to the Median imputation but we can see that the difference is small. Also not dropping variables leads to a better F1 score in general but it's very close to the K-nn imputation method and median method. The problem is that we will need to either impute them or drop the missing value to perform for example a K-NN model or a neural nets.So we will chose the one that maximizes F1 and accuracy and it is the K-NN imputation method !  
+
+
+### Preprocessing : we will make 2 types of preprocessing. One using the range method and one using the center and scale method and another one using the range method (for neural net) but it's always good so we can compare the 2 methods.
+
+```{r}
+
+range_values = preProcess(train.set, method = c("knnImpute", "range")) ### range method that we will use for neural nets and knn mostly
+
+train.range = predict(range_values, train.set)
+valid.range = predict(range_values, val.set)
+
+
+norm_values = preProcess(train.set, method = c("knnImpute", "center","scale")) ### z score method (-mean / sd)
+train.norm = predict(norm_values, train.set)
+valid.norm = predict(norm_values, val.set)
+
+#test = train.set
+#norm_values = preProcess(train.set, method = c("range"))
+
+#test_set = predict(norm_values, test)
+
+```
+
+
+
+### Could use this to scale back our variables
+```{r}
+scale_back_z_score_train <- function(z,var) {
+  sd_train = sd(train.set[,var], na.rm = T)
+  mean_train = mean(train.set[,var], na.rm = T)
+  x = sapply(z, function(x_) x_*sd_train + mean_train)
+  return(x)
+}
+
+scale_back_z_score_valid <- function(z,var) {
+  sd_train = sd(val.set[,var], na.rm = T)
+  mean_train = mean(val.set[,var], na.rm = T)
+  x = sapply(z, function(x_) x_*sd_train + mean_train)
+  return(x)
+}
+ 
+knn_set_scale_back = train.norm
+
+#colnames(train.norm[-10]) Could do this to scale back our data
+for (i in colnames(knn_set_scale_back[-10])) {
+  knn_set_scale_back[i] = scale_back_z_score(knn_set_scale_back[i],i)
+}
+
+```
+
+#### Let's look at the difference in the distribution when we imputed the missing values with knn and without doiing it :
+```{r}
+library(reshape2)
+ph_group = cbind(train.set$ph, knn_set_scale_back$ph)
+ph_group = as.data.frame(ph_group)
+colnames(ph_group) = c("ph no imputation", "ph knn imputation")
+ph_group = melt(ph_group)
+diff_ph = ggplot(ph_group, aes(x=value, group = variable, fill = variable)) + geom_density(alpha = 0.5)+labs(title = "Distribution of PH with and without knn imputation") + scale_fill_manual(values = c("red","blue"))
+
+sulfate_group = cbind(train.set$Sulfate, knn_set_scale_back$Sulfate)
+sulfate_group = as.data.frame(sulfate_group)
+colnames(sulfate_group) = c("sulfate no imputation", "sulfate knn imputation")
+sulfate_group = melt(sulfate_group)
+diff_sulfate = ggplot(sulfate_group, aes(x=value, group = variable, fill = variable)) + geom_density(alpha = 0.5)+labs(title = "Distribution of sulfate with and without knn imputation") + scale_fill_manual(values = c("red","blue"))
+
+trihalomethanes_group = cbind(train.set$Trihalomethanes, knn_set_scale_back$Trihalomethanes)
+trihalomethanes_group = as.data.frame(trihalomethanes_group)
+colnames(trihalomethanes_group) = c("trihalomethanes no imputation", "trihalomethanes knn imputation")
+trihalomethanes_group = melt(trihalomethanes_group)
+diff_triha = ggplot(trihalomethanes_group, aes(x=value, group = variable, fill = variable)) + geom_density(alpha = 0.5)+labs(title = "Distribution of trihalomethanes with and without knn imputation") + scale_fill_manual(values = c("red","blue"))
+```
+
+```{r}
+plot_grid(diff_ph, diff_sulfate, diff_triha)
+```
+
+The distribution didn't really change that much except for Sulfate where we had 25% of missing values but this was predicted. In general our distribution became a little bit more centered but it doesn't seem like there's a huge impact.
+
+3D graph to represent our water quality based on ph, Organic_carbon and Turbidity.
+```{r}
+fig <- plot_ly(knn_set_scale_back, x = ~ph, y = ~Turbidity, z = ~Organic_carbon, color = ~Potability)
+fig <- fig %>% add_markers()
+fig <- fig %>% layout(scene = list(xaxis = list(title = 'ph'),
+                     yaxis = list(title = 'Turbidity'),
+                     zaxis = list(title = 'Organic_carbon')))
+fig
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
