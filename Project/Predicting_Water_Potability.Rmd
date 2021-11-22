@@ -497,16 +497,9 @@ valid.norm = predict(norm_values, val.set)
 ### Could use this to scale back our variables
 
 ```{r}
-scale_back_z_score_train <- function(z,var) {
+scale_back_z_score <- function(z,var) {
   sd_train = sd(train.set[,var], na.rm = T)
   mean_train = mean(train.set[,var], na.rm = T)
-  x = sapply(z, function(x_) x_*sd_train + mean_train)
-  return(x)
-}
-
-scale_back_z_score_valid <- function(z,var) {
-  sd_train = sd(val.set[,var], na.rm = T)
-  mean_train = mean(val.set[,var], na.rm = T)
   x = sapply(z, function(x_) x_*sd_train + mean_train)
   return(x)
 }
@@ -594,7 +587,7 @@ as we can see with knn we predicted poorly our class.
 
 ### Now let's perform a decision tree : 
 for a tree we don't need to work with scaled variables so let's scale back a train and test set:
-
+Scaling back our train and validations sets : 
 ```{r}
 train_scaled_back = train.norm
 valid_scaled_back = valid.norm
@@ -606,8 +599,6 @@ for (i in colnames(train_scaled_back[-10])) {
 for (i in colnames(valid_scaled_back[-10])) {
   valid_scaled_back[i] = scale_back_z_score(valid_scaled_back[i],i)
 }
-
-
 ```
 
 
