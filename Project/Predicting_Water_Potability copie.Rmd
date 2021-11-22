@@ -8,6 +8,7 @@ output: html_document
 ### Loading the data set : 
 ```{r}
 rm(list = ls())
+setwd("~/Desktop/GSEM Master Business Analytics/1ère Année/Semestre Automne 2021 GSEM/Creating Value Through Data Mining/2021 Lecture/GitHub/cvtdm_project/Project")
 df = read.csv("water_potability.csv")
 ```
 
@@ -71,7 +72,7 @@ plot_grid(pie_chart, bar_chart, labels = "AUTO")
 
 ```
 
-We can see that we have more non-potable than potable water. In general, even if we have more non-potable water, our data set is pretty balanced. We have 1278 Potable and 1998 non-potable water. I think we can focus our analysis on accuracy and F1 score to be more robust.
+We can see that we have more non-potable than potable water. In general, even if we have more non-potable water, our data set is pretty balanced. We have 1278 Potable and 1998 non-potable water.
 
 ### Distribution of all our variables by using some boxplots : 
 
@@ -88,7 +89,7 @@ for (i in seq(1:9)) {
 }
 ```
 
-The distribution of both groups of water seems pretty similar. But we can clearly see something weird going on. First I would think that there would be a difference between the 2 groups. Second, the who recommends that the desirable limit of 'Solids' is 500 mg/liter and maximum limit of 'Solids' is 1000mg/liter (WHO) but we can clearly see that we have potable water that are well above this recommendation.
+The distribution of both groups of water seems pretty similar. It is weird. For example, if we look at the 'ph', we can see that some potable water have a 'ph' of 12 and some of 4. It does not seem realistic. 
 
 ### Distribution of all our variables by using some histograms : 
 
@@ -99,13 +100,13 @@ ggplot(df, aes(x=ph, fill=factor(Potability))) +
     geom_vline(aes(xintercept = median(df$ph, na.rm=T), color="median")) +
     geom_vline(aes(xintercept = mean(df$ph,na.rm = T), color ="mean")) +
     geom_vline(aes(xintercept =6.5, color="WHO recommendation")) +
-    geom_vline(aes(xintercept =8.5, color="WHO recommendation")) +
+    geom_vline(aes(xintercept =8, color="WHO recommendation")) +
     scale_color_manual(values = c("red","blue", "black"))  +
     theme_ipsum() +
     labs(fill="Quality of the water", title= "Distribution of ph for potable and non-potable water", color = "Mean and median")
 ```
 
-The 'ph' variable seems pretty normally distributed. We can see that the 'ph' variable is close to symmetric (median=mean). The potable and non potable water seem to be normally distributed with pretty much the same value for ph which seems a little bit weird. The WHO recommends to get drink water with a pH from 6.5 to 8.5.  
+The 'ph' variable seems pretty normally distributed. We can see that the 'ph' variable is close to symmetric (median=mean). The number of variables 'ph' of the non-potable water is higher than the potable one. The WHO recommends to get a pH from 6.5 to 8.
 
 ```{r}
 ggplot(df, aes(x=Hardness, fill=factor(Potability))) +
@@ -120,8 +121,7 @@ ggplot(df, aes(x=Hardness, fill=factor(Potability))) +
 #mean(df$Hardness,na.rm = T)
 ```
 
-The 'Hardness' variable seems pretty normally distributed. We can see that the 'Hardness' variable is close to symmetric (median=mean).It seems more centered as well. The WHO does not recommend a limit of 'Hardness'. In drinking-water, hardness is in the range 10–500 mg of calcium carbonate per litre source : https://www.who.int/water_sanitation_health/dwq/hardness.pdf
-
+The 'Hardness' variable seems pretty normally distributed. We can see that the 'Hardness' variable is close to symmetric (median=mean). The number of variables 'Hardness' of the non-potable water is much higher than the potable one. It seems more centered as well. The WHO does not recommend a limit of 'Hardness'.
 
 ```{r}
 ggplot(df, aes(x=Solids, fill=factor(Potability))) +
@@ -137,7 +137,7 @@ ggplot(df, aes(x=Solids, fill=factor(Potability))) +
 
 ```
 
-The 'Solids' variable seems pretty normally distributed. We can see that the 'Solids' variable is not close to symmetric and is right-skewed (median<mean). The desirable limit of 'Solids' is 500 mg/liter and maximum limit of 'Solids' is 1000mg/liter (WHO). Once again, it seems that our values are not realistic for potable water.
+The 'Solids' variable seems pretty normally distributed. We can see that the 'Solids' variable is not close to symmetric and is right-skewed (median<mean). The number of variables 'Solids' of the non-potable water is much higher than the potable one. The desirable limit of 'Solids' is 500 mg/liter and maximum limit of 'Solids' is 1000mg/liter (WHO). Once again, it seems that our values are not realistic.
 
 ```{r}
 ggplot(df, aes(x=Chloramines, fill=factor(Potability))) +
@@ -153,7 +153,7 @@ ggplot(df, aes(x=Chloramines, fill=factor(Potability))) +
 
 ```
 
-The 'Chloramines' variable seems pretty normally distributed. We can see that the 'Chloramines' variable is close to symmetric (median=mean). It seems more centered as well. The desirable limit of 'Chloramines' is 4 mg/liter (WHO). Once again, it seems that our values are not realistic.
+The 'Chloramines' variable seems pretty normally distributed. We can see that the 'Chloramines' variable is close to symmetric (median=mean). The number of variables 'Chloramines' of the non-potable water is much higher than the potable one. It seems more centered as well. The desirable limit of 'Chloramines' is 4 mg/liter (WHO). Once again, it seems that our values are not realistic.
 
 ```{r}
 ggplot(df, aes(x=Sulfate, fill=factor(Potability))) +
@@ -167,7 +167,7 @@ ggplot(df, aes(x=Sulfate, fill=factor(Potability))) +
 
 ```
 
-The 'Sulfate' variable seems pretty normally distributed. We can see that the 'Sulfate' variable is close to symmetric (median=mean).It seems more centered as well. The WHO recommend a level of 500 mg/l as a limit for sulfate.
+The 'Sulfate' variable seems pretty normally distributed. We can see that the 'Sulfate' variable is close to symmetric (median=mean). The number of variables 'Sulfate' of the non-potable water is much higher than the potable one. It seems more centered as well. The WHO does not recommend a limit of 'Sulfate'.
 
 ```{r}
 ggplot(df, aes(x=Conductivity, fill=factor(Potability))) +
@@ -183,7 +183,7 @@ ggplot(df, aes(x=Conductivity, fill=factor(Potability))) +
 
 ```
 
-The 'Conductivity' variable seems pretty normally distributed. Even though the 'Conductivity' variable is slightly right-skewed (median<mean), we can see that it is close to symmetric (median=mean).The desirable limit of 'Conductivity' should not exceed 400 μS/cm (WHO). 
+The 'Conductivity' variable seems pretty normally distributed. Even though the 'Conductivity' variable is slightly right-skewed (median<mean), we can see that it is close to symmetric (median=mean). The number of variables 'Conductivity' of the non-potable water is higher than the potable one. The desirable limit of 'Conductivity' should not exceed 400 μS/cm (WHO). 
 
 ```{r}
 ggplot(df, aes(x=Organic_carbon, fill=factor(Potability))) +
@@ -191,14 +191,13 @@ ggplot(df, aes(x=Organic_carbon, fill=factor(Potability))) +
     scale_fill_manual(values=c("#69b3a2", "#404080"), labels = c("Non-potable","Potable")) +
     geom_vline(aes(xintercept = median(df$Organic_carbon, na.rm=T), color="median")) +
     geom_vline(aes(xintercept = mean(df$Organic_carbon,na.rm = T), color ="mean")) +
-  geom_vline(aes(xintercept = 2, color ="Recommendation")) +
-    scale_color_manual(values = c("red","blue", "black"))  +
+    scale_color_manual(values = c("red","blue"))  +
     theme_ipsum() +
     labs(fill="Quality of the water", title= "Distribution of Organic carbon for potable and non-potable water", color = "Mean and median")
 
 ```
 
-The 'Organic_carbon' variable seems pretty normally distributed. We can see that the 'Organic_carbon' variable is close to symmetric (median=mean). The recommendation is that water should note have higher than 2mg/L of organic carbon to be drinkable. https://www.canada.ca/en/health-canada/programs/consultation-organic-matter-drinking-water/document.html
+The 'Organic_carbon' variable seems pretty normally distributed. We can see that the 'Organic_carbon' variable is close to symmetric (median=mean). The number of variables 'Organic_carbon' of the non-potable water is higher than the potable one. The WHO does not recommend a limit of 'Organic_carbon'.
 
 ```{r}
 ggplot(df, aes(x=Trihalomethanes, fill=factor(Potability))) +
@@ -214,7 +213,7 @@ ggplot(df, aes(x=Trihalomethanes, fill=factor(Potability))) +
 
 ```
 
-The 'Trihalomethanes' variable seems pretty normally distributed. We can see that the 'Trihalomethanes' variable is close to symmetric (median=mean). The desirable limit of 'Trihalomethanes' is 80 ppm.
+The 'Trihalomethanes' variable seems pretty normally distributed. We can see that the 'Trihalomethanes' variable is close to symmetric (median=mean). The number of variables 'Trihalomethanes' of the non-potable water is higher than the potable one. The desirable limit of 'Trihalomethanes' is 80 ppm.
 
 ```{r}
 ggplot(df, aes(x=Turbidity, fill=factor(Potability))) +
@@ -230,7 +229,7 @@ ggplot(df, aes(x=Turbidity, fill=factor(Potability))) +
 
 ```
 
-The 'Turbidity' variable seems pretty normally distributed. We can see that the 'Turbidity' variable is close to symmetric (median=mean). The desirable limit of 'Turbidity' is 5 NTU (WHO).
+The 'Turbidity' variable seems pretty normally distributed. We can see that the 'Turbidity' variable is close to symmetric (median=mean). The number of variables 'Turbidity' of the non-potable water is higher than the potable one. The desirable limit of 'Turbidity' is 5 NTU (WHO).
 
 ### Difference between our potable and non-potable water by using a radar chart.
 
@@ -597,7 +596,7 @@ knn_res = knn(train.range[-10], valid.range[-10], cl=train.range$Potability,k=42
 confusionMatrix(knn_res, valid.range$Potability,positive = "1")
 ```
 
-as we can see with knn we predicted poorly our class. 61.76 % of accuracy is really not good. We predicted our class 0 (not potable water) better than potable water. Why ? Well it's prbably because we have more non potable water in our data set and having a large k make our prediction based on the more prevalent class which is non potable water.
+as we can see with knn we predicted poorly our class.
 
 ### Now let's perform a decision tree : 
 for a tree we don't need to work with scaled variables so let's scale back a train and test set:
@@ -615,94 +614,84 @@ for (i in colnames(valid_scaled_back[-10])) {
 }
 ```
 
-Building a full grown tree : 
-```{r}
-set.seed(1)
-train_tree = rpart(Potability ~ . , data=train_scaled_back, method = "class", control=rpart.control(maxdepth=30,cp=0, minsplit = 1,minbucket = 1, xval = 5)) 
-```
-
-Pruning our full grown tree using 5 fold cross validation : 
-```{r}
-library(rattle)
-prune_cp.index = which.min(train_tree$cptable[,"xerror"])
-prune_cp = train_tree$cptable[prune_cp.index,"CP"]
-prune_cp #  0.007822686 CP
-
-pruned_train_tree <- prune(train_tree, cp = prune_cp)
-fancyRpartPlot(pruned_train_tree)
-```
+Neural nets - Romain.
 
 ```{r}
-classificationtree_valid_predict = predict(pruned_train_tree, valid_scaled_back , type = "class")
-confusionMatrix(classificationtree_valid_predict, valid_scaled_back$Potability, positive = "1")
+set.seed(69)
+#n_x: the size of the input layer 
+#n_h: the size of the hidden layer 
+#n_y: the size of the output layer 
+train.range = predict(range_values, train.set) #Defined previously.
+valid.range = predict(range_values, val.set) #Defined previously. #Test.
+X_train <- scale(train.range[, c(1:9)])
+y_train <- train.range$Potability
+
+dim(y_train) <- c(length(y_train), 1) # add extra dimension to vector
+
+X_test <- scale(valid.range[, c(1:9)])
+
+y_test <- valid.range$Potability
+dim(y_test) <- c(length(y_test), 1) # add extra dimension to vector
+
+X_train <- as.matrix(X_train, byrow=TRUE)
+X_train <- t(X_train)
+y_train <- as.matrix(y_train, byrow=TRUE)
+y_train <- t(y_train)
+
+X_test <- as.matrix(X_test, byrow=TRUE)
+X_test <- t(X_test)
+y_test <- as.matrix(y_test, byrow=TRUE)
+y_test <- t(y_test)
+
+dim(X_train)
+dim(y_train)
+dim(X_test)
+dim(y_test)
+
 ```
 
-We can see that with a tree we have an accuracy of 63.44% which is better than with knn ! The balanced accuracy is at 56.9 % meaning that we are doing a little bit better than by guessing randomly. It is clear and normal that we get those kind of results since it seems that the data set was weird. Indeed we had same values for all the variables even if they were potable or non potable water
-
-### Naive baes : don't need scaling
 ```{r}
-library(e1071)
-nbayes.model = naiveBayes(Potability ~ ., data = train_scaled_back)
-nbayes.predict = predict(nbayes.model, valid_scaled_back)
-confusionMatrix(nbayes.predict, valid_scaled_back$Potability, positive = "1")
+getLayerSize <- function(X, y, hidden_neurons, train=TRUE) {
+  n_x <- dim(X)[1]
+  n_h <- hidden_neurons
+  n_y <- dim(y)[1]   
+  
+  size <- list("n_x" = n_x,
+               "n_h" = n_h,
+               "n_y" = n_y)
+  
+  return(size)
+}
+
+layer_size <- getLayerSize(X_train, y_train, hidden_neurons = 4) #The number of hidden neurons should be between the size of the input layer and the size of the output layer. The number of hidden neurons should be 2/3 the size of the input layer, plus the size of the output layer. The number of hidden neurons should be less than twice the size of the input layer. Here, it is therefore 4.
+layer_size
 ```
 
-Accuracy : 0.6237, Balanced Accuracy : 0.555 but we still struggle to predict well.
-
-### Boosting : 
-```{r}
-library(adabag)
-set.seed(1)
-boost = boosting(Potability~., data = train_scaled_back, type = "class")
-
-valid_predict_boost = predict(boost, valid_scaled_back , type = "class")
-confusionMatrix(as.factor(valid_predict_boost$class), valid_scaled_back$Potability, positive = "1")
-```
-
-Accuracy : 0.6359,Balanced Accuracy : 0.5943    Alreadyd way better.    
+Neural nets (second try) - Romain.
 
 ```{r}
-set.seed(1) 
-library(fastAdaboost)
-tr_control = trainControl(method = "cv",number = 5 ,summaryFunction =  multiClassSummary) 
+library(neuralnet)
+library(nnet)
+library(Metrics)
 
-boosted_cv = train(Potability ~ ., #. is to tell that we use all our variables as predictors on personal loan
-               data = train_scaled_back,    ## on our training data
-               method = "adaboost",    ### we use classification tree
-               tuneLength=2,
-               trControl = tr_control)
-print(boosted_cv)
+scale_back_min_max_score <- function(x_) {
+  min_x = min(train.range$Potability)
+  max_x = max(train.range$Potability)
+  x = sapply(x_, function(x__) x__*(max_x - min_x) + min_x)
+  return(x)
+}
+nn1 <- neuralnet(Potability ~ . ,data = train.range, linear.output = FALSE, hidden = 2) 
+plot(nn1, rep = "best")
+nn1.predict.train <- predict(nn1, train.range)
+nn1.predict.valid <- predict(nn1, valid.range)
+rmse.nn1.train <- rmse(actual = scale_back_min_max_score(train.range$Potability),
+                       predicted = scale_back_min_max_score(nn1.predict.train))
+rmse.nn1.valid <- rmse(actual = scale_back_min_max_score(valid.norm.df$Price),
+                       predicted = scale_back_min_max_score(nn1.predict.valid))
+
+#The number of hidden neurons should be between the size of the input layer and the size of the output layer. The number of hidden neurons should be 2/3 the size of the input layer, plus the size of the output layer. The number of hidden neurons should be less than twice the size of the input layer. Here, the size of the input layer is 9 and the size of the output layer is 2. Therefore, the number of hidden neurons should be 5. #Source : https://stats.stackexchange.com 
 ```
 
-Accuracy was used to select the optimal model using the largest value.
-The final values used for the model were nIter = 100 and method = Adaboost.M1.
-
-### bagging
-```{r}
-set.seed(1)
-bag = bagging(Potability~., data = train_scaled_back, type = "class")
-
-
-valid_predict_bag = predict(bag, valid_scaled_back , type = "class")
-### to get the class, we need to use $class
-#valid_predict_boost
-confusionMatrix(as.factor(valid_predict_bag$class), valid_scaled_back$Potability, positive = "1")
-```
-
-Accuracy : 0.6511 Balanced Accuracy : 0.56906
-
-#### Random Forest
-```{r}
-library(randomForest)
-set.seed(1)
-randomf = randomForest(Potability~., data = train_scaled_back,mtry = 7 )
-
-
-<<<<<<< HEAD
-valid_predict_rf = predict(randomf, valid_scaled_back , type = "class")
-confusionMatrix(as.factor(valid_predict_rf), valid_scaled_back$Potability, positive = "1")
-```
-=======
 Logistic Regression - Romain
 
 ```{r}
@@ -785,19 +774,11 @@ accuracy.df = cbind(accuracy.df, knn = confusionMatrix(knn_res, valid.range$Pota
 accuracy.df #Comparing the different methods.
 ```
 
->>>>>>> 9f86e92c40f19246e40a0739e19e4a28ac531144
-
-mtry = 7 Accuracy : 0.6725   ,Balanced Accuracy : 0.6176 ### best one I tried will all mtry possibility
-
-with range data
-```{r}
-set.seed(1)
-randomf = randomForest(Potability~., data = train.range,mtry = 5 )
 
 
-valid_predict_rf = predict(randomf, valid.range , type = "class")
-confusionMatrix(as.factor(valid_predict_rf), valid.range$Potability, positive = "1")
-```
+
+
+
 
 
 
