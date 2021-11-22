@@ -8,6 +8,7 @@ output: html_document
 ### Loading the data set : 
 ```{r}
 rm(list = ls())
+setwd("~/Desktop/GSEM Master Business Analytics/1ère Année/Semestre Automne 2021 GSEM/Creating Value Through Data Mining/2021 Lecture/GitHub/cvtdm_project/Project")
 df = read.csv("water_potability.csv")
 ```
 
@@ -98,12 +99,14 @@ ggplot(df, aes(x=ph, fill=factor(Potability))) +
     scale_fill_manual(values=c("#69b3a2", "#404080"), labels = c("Non-potable","Potable")) +
     geom_vline(aes(xintercept = median(df$ph, na.rm=T), color="median")) +
     geom_vline(aes(xintercept = mean(df$ph,na.rm = T), color ="mean")) +
-    scale_color_manual(values = c("red","blue"))  +
+    geom_vline(aes(xintercept =6.5, color="WHO recommendation")) +
+    geom_vline(aes(xintercept =8, color="WHO recommendation")) +
+    scale_color_manual(values = c("red","blue", "black"))  +
     theme_ipsum() +
-    labs(fill="Quality of the water", title= "Distribution of ph for good and bad water", color = "Mean and median")
+    labs(fill="Quality of the water", title= "Distribution of ph for potable and non-potable water", color = "Mean and median")
 ```
 
-The 'ph' variable seems pretty normally distributed. We can see that the 'ph' variable is close to symmetric (median=mean). The value of the 'ph' of the non-potable water is higher than the potable one. The WHO recommends to get a pH from 6.5 to 8.
+The 'ph' variable seems pretty normally distributed. We can see that the 'ph' variable is close to symmetric (median=mean). The number of variables 'ph' of the non-potable water is higher than the potable one. The WHO recommends to get a pH from 6.5 to 8.
 
 ```{r}
 ggplot(df, aes(x=Hardness, fill=factor(Potability))) +
@@ -113,12 +116,12 @@ ggplot(df, aes(x=Hardness, fill=factor(Potability))) +
     geom_vline(aes(xintercept = mean(df$Hardness,na.rm = T), color ="mean")) +
     scale_color_manual(values = c("red","blue"))  +
     theme_ipsum() +
-    labs(fill="Quality of the water", title= "Distribution of Hardness for good and bad water", color = "Mean and median")
+    labs(fill="Quality of the water", title= "Distribution of Hardness for potable and non-potable water", color = "Mean and median")
 #median(df$Hardness, na.rm=T)
 #mean(df$Hardness,na.rm = T)
 ```
 
-The 'Hardness' variable seems pretty normally distributed. We can see that the 'Hardness' variable is close to symmetric (median=mean). The value of the 'Hardness' of the non-potable water is much higher than the potable one. It seems more centered as well. The WHO does not recommend a limit of 'Hardness'.
+The 'Hardness' variable seems pretty normally distributed. We can see that the 'Hardness' variable is close to symmetric (median=mean). The number of variables 'Hardness' of the non-potable water is much higher than the potable one. It seems more centered as well. The WHO does not recommend a limit of 'Hardness'.
 
 ```{r}
 ggplot(df, aes(x=Solids, fill=factor(Potability))) +
@@ -126,13 +129,15 @@ ggplot(df, aes(x=Solids, fill=factor(Potability))) +
     scale_fill_manual(values=c("#69b3a2", "#404080"), labels = c("Non-potable","Potable")) +
     geom_vline(aes(xintercept = median(df$Solids, na.rm=T), color="median")) +
     geom_vline(aes(xintercept = mean(df$Solids,na.rm = T), color ="mean")) +
-    scale_color_manual(values = c("red","blue"))  +
+    geom_vline(aes(xintercept = 500, color ="WHO recommendation")) +
+    geom_vline(aes(xintercept = 1000, color ="WHO recommendation")) +
+    scale_color_manual(values = c("red","blue", "black"))  +
     theme_ipsum() +
-    labs(fill="Quality of the water", title= "Distribution of Solids for good and bad water", color = "Mean and median")
+    labs(fill="Quality of the water", title= "Distribution of Solids for potable and non-potable water", color = "Mean and median")
 
 ```
 
-The 'Solids' variable seems pretty normally distributed. We can see that the 'Solids' variable is not close to symmetric and is right-skewed (median<mean). The value of the 'Solids' of the non-potable water is much higher than the potable one. The desirable limit of 'Solids' is 500 mg/liter (WHO).
+The 'Solids' variable seems pretty normally distributed. We can see that the 'Solids' variable is not close to symmetric and is right-skewed (median<mean). The number of variables 'Solids' of the non-potable water is much higher than the potable one. The desirable limit of 'Solids' is 500 mg/liter and maximum limit of 'Solids' is 1000mg/liter (WHO). Once again, it seems that our values are not realistic.
 
 ```{r}
 ggplot(df, aes(x=Chloramines, fill=factor(Potability))) +
@@ -140,13 +145,15 @@ ggplot(df, aes(x=Chloramines, fill=factor(Potability))) +
     scale_fill_manual(values=c("#69b3a2", "#404080"), labels = c("Non-potable","Potable")) +
     geom_vline(aes(xintercept = median(df$Chloramines, na.rm=T), color="median")) +
     geom_vline(aes(xintercept = mean(df$Chloramines,na.rm = T), color ="mean")) +
-    scale_color_manual(values = c("red","blue"))  +
+    geom_vline(aes(xintercept = 0, color ="WHO recommendation")) +
+    geom_vline(aes(xintercept = 4, color ="WHO recommendation")) +
+    scale_color_manual(values = c("red","blue","black"))  +
     theme_ipsum() +
-    labs(fill="Quality of the water", title= "Distribution of Chloramines for good and bad water", color = "Mean and median")
+    labs(fill="Quality of the water", title= "Distribution of Chloramines for potable and non-potable water", color = "Mean and median")
 
 ```
 
-The 'Chloramines' variable seems pretty normally distributed. We can see that the 'Chloramines' variable is close to symmetric (median=mean). The value of the 'Chloramines' of the non-potable water is much higher than the potable one. It seems more centered as well. The desirable limit of 'Chloramines' is 4 mg/liter (WHO).
+The 'Chloramines' variable seems pretty normally distributed. We can see that the 'Chloramines' variable is close to symmetric (median=mean). The number of variables 'Chloramines' of the non-potable water is much higher than the potable one. It seems more centered as well. The desirable limit of 'Chloramines' is 4 mg/liter (WHO). Once again, it seems that our values are not realistic.
 
 ```{r}
 ggplot(df, aes(x=Sulfate, fill=factor(Potability))) +
@@ -156,11 +163,11 @@ ggplot(df, aes(x=Sulfate, fill=factor(Potability))) +
     geom_vline(aes(xintercept = mean(df$Sulfate,na.rm = T), color ="mean")) +
     scale_color_manual(values = c("red","blue"))  +
     theme_ipsum() +
-    labs(fill="Quality of the water", title= "Distribution of Sulfate for good and bad water", color = "Mean and median")
+    labs(fill="Quality of the water", title= "Distribution of Sulfate for potable and non-potable water", color = "Mean and median")
 
 ```
 
-The 'Sulfate' variable seems pretty normally distributed. We can see that the 'Sulfate' variable is close to symmetric (median=mean). The value of the 'Sulfate' of the non-potable water is much higher than the potable one. It seems more centered as well. The WHO does not recommend a limit of 'Sulfate'.
+The 'Sulfate' variable seems pretty normally distributed. We can see that the 'Sulfate' variable is close to symmetric (median=mean). The number of variables 'Sulfate' of the non-potable water is much higher than the potable one. It seems more centered as well. The WHO does not recommend a limit of 'Sulfate'.
 
 ```{r}
 ggplot(df, aes(x=Conductivity, fill=factor(Potability))) +
@@ -168,13 +175,15 @@ ggplot(df, aes(x=Conductivity, fill=factor(Potability))) +
     scale_fill_manual(values=c("#69b3a2", "#404080"), labels = c("Non-potable","Potable")) +
     geom_vline(aes(xintercept = median(df$Conductivity, na.rm=T), color="median")) +
     geom_vline(aes(xintercept = mean(df$Conductivity,na.rm = T), color ="mean")) +
-    scale_color_manual(values = c("red","blue"))  +
+    geom_vline(aes(xintercept = 0, color ="WHO recommendation")) +
+    geom_vline(aes(xintercept = 400, color ="WHO recommendation")) +
+    scale_color_manual(values = c("red","blue", "black"))  +
     theme_ipsum() +
-    labs(fill="Quality of the water", title= "Distribution of Conductivity for good and bad water", color = "Mean and median")
+    labs(fill="Quality of the water", title= "Distribution of Conductivity for potable and non-potable water", color = "Mean and median")
 
 ```
 
-The 'Conductivity' variable seems pretty normally distributed. Even though the 'Conductivity' variable is slightly right-skewed (median<mean), we can see that it is close to symmetric (median=mean). The value of the 'Conductivity' of the non-potable water is higher than the potable one. The desirable limit of 'Conductivity' should not exceed 400 μS/cm (WHO). 
+The 'Conductivity' variable seems pretty normally distributed. Even though the 'Conductivity' variable is slightly right-skewed (median<mean), we can see that it is close to symmetric (median=mean). The number of variables 'Conductivity' of the non-potable water is higher than the potable one. The desirable limit of 'Conductivity' should not exceed 400 μS/cm (WHO). 
 
 ```{r}
 ggplot(df, aes(x=Organic_carbon, fill=factor(Potability))) +
@@ -184,11 +193,11 @@ ggplot(df, aes(x=Organic_carbon, fill=factor(Potability))) +
     geom_vline(aes(xintercept = mean(df$Organic_carbon,na.rm = T), color ="mean")) +
     scale_color_manual(values = c("red","blue"))  +
     theme_ipsum() +
-    labs(fill="Quality of the water", title= "Distribution of Organic carbon for good and bad water", color = "Mean and median")
+    labs(fill="Quality of the water", title= "Distribution of Organic carbon for potable and non-potable water", color = "Mean and median")
 
 ```
 
-The 'Organic_carbon' variable seems pretty normally distributed. We can see that the 'Organic_carbon' variable is close to symmetric (median=mean). The value of the 'Organic_carbon' of the non-potable water is higher than the potable one. The WHO does not recommend a limit of 'Organic_carbon'.
+The 'Organic_carbon' variable seems pretty normally distributed. We can see that the 'Organic_carbon' variable is close to symmetric (median=mean). The number of variables 'Organic_carbon' of the non-potable water is higher than the potable one. The WHO does not recommend a limit of 'Organic_carbon'.
 
 ```{r}
 ggplot(df, aes(x=Trihalomethanes, fill=factor(Potability))) +
@@ -196,13 +205,15 @@ ggplot(df, aes(x=Trihalomethanes, fill=factor(Potability))) +
     scale_fill_manual(values=c("#69b3a2", "#404080"), labels = c("Non-potable","Potable")) +
     geom_vline(aes(xintercept = median(df$Trihalomethanes, na.rm=T), color="median")) +
     geom_vline(aes(xintercept = mean(df$Trihalomethanes,na.rm = T), color ="mean")) +
-    scale_color_manual(values = c("red","blue"))  +
+    geom_vline(aes(xintercept = 0, color ="WHO recommendation")) +
+    geom_vline(aes(xintercept = 80, color ="WHO recommendation")) +
+    scale_color_manual(values = c("red","blue","black"))  +
     theme_ipsum() +
-    labs(fill="Quality of the water", title= "Distribution of Trihalomethanes for good and bad water", color = "Mean and median")
+    labs(fill="Quality of the water", title= "Distribution of Trihalomethanes for potable and non-potable water", color = "Mean and median")
 
 ```
 
-The 'Trihalomethanes' variable seems pretty normally distributed. We can see that the 'Trihalomethanes' variable is close to symmetric (median=mean). The value of the 'Trihalomethanes' of the non-potable water is higher than the potable one. The desirable limit of 'Trihalomethanes' is 80 ppm.
+The 'Trihalomethanes' variable seems pretty normally distributed. We can see that the 'Trihalomethanes' variable is close to symmetric (median=mean). The number of variables 'Trihalomethanes' of the non-potable water is higher than the potable one. The desirable limit of 'Trihalomethanes' is 80 ppm.
 
 ```{r}
 ggplot(df, aes(x=Turbidity, fill=factor(Potability))) +
@@ -210,13 +221,15 @@ ggplot(df, aes(x=Turbidity, fill=factor(Potability))) +
     scale_fill_manual(values=c("#69b3a2", "#404080"), labels = c("Non-potable","Potable")) +
     geom_vline(aes(xintercept = median(df$Turbidity, na.rm=T), color="median")) +
     geom_vline(aes(xintercept = mean(df$Turbidity,na.rm = T), color ="mean")) +
-    scale_color_manual(values = c("red","blue"))  +
+    geom_vline(aes(xintercept = 0, color ="WHO recommendation")) +
+    geom_vline(aes(xintercept = 5, color ="WHO recommendation")) +
+    scale_color_manual(values = c("red","blue","black"))  +
     theme_ipsum() +
-    labs(fill="Quality of the water", title= "Distribution of Turbidity for good and bad water", color = "Mean and median")
+    labs(fill="Quality of the water", title= "Distribution of Turbidity for potable and non-potable water", color = "Mean and median")
 
 ```
 
-The 'Turbidity' variable seems pretty normally distributed. We can see that the 'Turbidity' variable is close to symmetric (median=mean). The value of the 'Turbidity' of the non-potable water is higher than the potable one. The desirable limit of 'Turbidity' is 5 NTU (WHO).
+The 'Turbidity' variable seems pretty normally distributed. We can see that the 'Turbidity' variable is close to symmetric (median=mean). The number of variables 'Turbidity' of the non-potable water is higher than the potable one. The desirable limit of 'Turbidity' is 5 NTU (WHO).
 
 ### Difference between our potable and non-potable water by using a radar chart.
 
