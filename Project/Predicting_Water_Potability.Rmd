@@ -543,6 +543,53 @@ fig
 ```
 
 
+#### Implemetation of our models : 
+
+##### Let's start with KNN : 
+For KNN, it is better to have our train and test set that have value ranged from 0 - 1. So, we will use the train range and valid range sets.
+First we need to find the best K for our model so let's do a cross-validation : 
+```{r}
+set.seed(1) 
+
+tr_control = trainControl(method = "cv",number = 5 ,summaryFunction =  multiClassSummary) 
+
+knn_cross_val = train(Potability ~ ., #. is to tell that we use all our variables as predictors on personal loan
+               data = train.range,    ## on our training data
+               method = "knn",    ### we use classification tree
+               trControl = tr_control, 
+               tuneGrid = data.frame(k = seq(50)))
+print(knn_cross_val)
+knn_cross_val$results[max(knn_cross_val$results$F1) == knn_cross_val$results$F1, c("k","F1")]
+
+```
+
+The best k that maximizes our accuracy and our F1 score at the same time is k = 42
+
+```{r}
+library(class)
+knn_res = knn(train.range[-10], valid.range[-10], cl=train.range$Potability,k=42)
+confusionMatrix(knn_res, valid.range$Potability,positive = "1")
+```
+
+as we can see with knn we predicted poorly our class.
+
+### Now let's perform a decision tree : 
+for a tree we don't need to work with scaled variables so let's scale back a train and test set:
+
+```{r}
+train_scaled_back = train.norm
+valid_scaled_back = valid.norm
+#colnames(train.norm[-10]) Could do this to scale back our data
+for (i in colnames(train_scaled_back[-10])) {
+  train_scaled_back[i] = scale_back_z_score(train_scaled_back[i],i)
+}
+
+for (i in colnames(valid_scaled_back[-10])) {
+  valid_scaled_back[i] = scale_back_z_score(valid_scaled_back[i],i)
+}
+
+
+```
 
 
 
