@@ -28,20 +28,22 @@ library(pheatmap) ### Nice heatmaps
 library(fmsb) ### Radar chart
 ```
 
-##### Now that we have loaded our data set, a good thing to do is to look at our variables and how our data set is constructed.
+### Exploratory data analysis :
+
 ```{r}
 str(df)
 ```
 
-As you can see, our data set has 3276 observations and 10 variables. They are all numerical values except Potability which is an integer. It is normal since Potability indicates if our water is either potable or not. We will need to transform it into a factor later on. We can already see some missing values.
+As you can see, our data set has 3276 observations and 10 variables. They are all numerical values except 'Potability' which is an integer. It is normal since 'Potability' indicates if our water is either potable or not. We will need to transform it into a factor later on. We can already see some missing values.
 
 ```{r}
 summary(df)
 ```
 
-Here we can see the minimum, maximum, mean and median of all our variables. What is really important to notice is that we have 491 missing values in ph, 781 in Sulfate and 162 in Trihalomethanes. We will need to find a good strategy to deal with them.
+Here we can see the minimum, maximum, mean and median of all our variables. What is really important to notice is that we have 491 missing values in 'ph', 781 in 'Sulfate' and 162 in 'Trihalomethanes.' We will need to find a good strategy to deal with them.
 
-A good question now is to ask ourselves if we have a balanced data since we are going to classify our water based on the Potability variable.
+We could check if we have a balanced data since we are going to classify our water based on the 'Potability' variable.
+
 ```{r}
 potable_amount = sum(df$Potability == 1)/nrow(df)
 notpotable_amount = sum(df$Potability == 0) / nrow(df)
@@ -69,10 +71,10 @@ plot_grid(pie_chart, bar_chart, labels = "AUTO")
 
 ```
 
-We can see that we have more non-potable the potable water. In general even if we have more non-potable water, our data set is pretty balanced. We have 1278 Potable and 1998 non-potable water.
+We can see that we have more non-potable than potable water. In general, even if we have more non-potable water, our data set is pretty balanced. We have 1278 Potable and 1998 non-potable water.
 
-I think that now is a good time to look deeper at our variables : 
-let's look at the distribution of our variables using a boxplot first : 
+### Distribution of all our variables by using some boxplots : 
+
 ```{r, fig.height=9, fig.width=9}
 par(mfrow=c(3,3))
 for (i in seq(1:9)) {
@@ -86,7 +88,9 @@ for (i in seq(1:9)) {
 }
 ```
 
-The distribution of both our potable and non potable water seems pretty similar. It's weird. Looking at ph for example we can see that some drinkable water had ph of 12 and even 4 which is not really possible. There's something weird going and with this data set. Let's good a bit deeper into our exploratory analysis using a histogram.
+The distribution of both groups of water seems pretty similar. It is weird. For example, if we look at the 'ph', we can see that some potable water have a 'ph' of 12 and some of 4. It does not seem realistic. 
+
+### Distribution of all our variables by using some histograms : 
 
 ```{r}
 ggplot(df, aes(x=ph, fill=factor(Potability))) +
@@ -97,9 +101,9 @@ ggplot(df, aes(x=ph, fill=factor(Potability))) +
     scale_color_manual(values = c("red","blue"))  +
     theme_ipsum() +
     labs(fill="Quality of the water", title= "Distribution of ph for good and bad water", color = "Mean and median")
-
 ```
 
+The 'ph' variable seems pretty normally distributed. We can see that the 'ph' variable is close to symmetric (median=mean). The value of the 'ph' of the non-potable water is higher than the potable one. The WHO recommends to get a pH from 6.5 to 8.
 
 ```{r}
 ggplot(df, aes(x=Hardness, fill=factor(Potability))) +
@@ -114,6 +118,8 @@ ggplot(df, aes(x=Hardness, fill=factor(Potability))) +
 #mean(df$Hardness,na.rm = T)
 ```
 
+The 'Hardness' variable seems pretty normally distributed. We can see that the 'Hardness' variable is close to symmetric (median=mean). The value of the 'Hardness' of the non-potable water is much higher than the potable one. It seems more centered as well. The WHO does not recommend a limit of 'Hardness'.
+
 ```{r}
 ggplot(df, aes(x=Solids, fill=factor(Potability))) +
     geom_histogram( color="#e9ecef", alpha=0.6, position = 'identity') +
@@ -125,6 +131,8 @@ ggplot(df, aes(x=Solids, fill=factor(Potability))) +
     labs(fill="Quality of the water", title= "Distribution of Solids for good and bad water", color = "Mean and median")
 
 ```
+
+The 'Solids' variable seems pretty normally distributed. We can see that the 'Solids' variable is not close to symmetric and is right-skewed (median<mean). The value of the 'Solids' of the non-potable water is much higher than the potable one. The desirable limit of 'Solids' is 500 mg/liter (WHO).
 
 ```{r}
 ggplot(df, aes(x=Chloramines, fill=factor(Potability))) +
@@ -138,6 +146,8 @@ ggplot(df, aes(x=Chloramines, fill=factor(Potability))) +
 
 ```
 
+The 'Chloramines' variable seems pretty normally distributed. We can see that the 'Chloramines' variable is close to symmetric (median=mean). The value of the 'Chloramines' of the non-potable water is much higher than the potable one. It seems more centered as well. The desirable limit of 'Chloramines' is 4 mg/liter (WHO).
+
 ```{r}
 ggplot(df, aes(x=Sulfate, fill=factor(Potability))) +
     geom_histogram( color="#e9ecef", alpha=0.6, position = 'identity') +
@@ -149,6 +159,8 @@ ggplot(df, aes(x=Sulfate, fill=factor(Potability))) +
     labs(fill="Quality of the water", title= "Distribution of Sulfate for good and bad water", color = "Mean and median")
 
 ```
+
+The 'Sulfate' variable seems pretty normally distributed. We can see that the 'Sulfate' variable is close to symmetric (median=mean). The value of the 'Sulfate' of the non-potable water is much higher than the potable one. It seems more centered as well. The WHO does not recommend a limit of 'Sulfate'.
 
 ```{r}
 ggplot(df, aes(x=Conductivity, fill=factor(Potability))) +
@@ -162,6 +174,8 @@ ggplot(df, aes(x=Conductivity, fill=factor(Potability))) +
 
 ```
 
+The 'Conductivity' variable seems pretty normally distributed. Even though the 'Conductivity' variable is slightly right-skewed (median<mean), we can see that it is close to symmetric (median=mean). The value of the 'Conductivity' of the non-potable water is higher than the potable one. The desirable limit of 'Conductivity' should not exceed 400 μS/cm (WHO). 
+
 ```{r}
 ggplot(df, aes(x=Organic_carbon, fill=factor(Potability))) +
     geom_histogram( color="#e9ecef", alpha=0.6, position = 'identity') +
@@ -173,6 +187,8 @@ ggplot(df, aes(x=Organic_carbon, fill=factor(Potability))) +
     labs(fill="Quality of the water", title= "Distribution of Organic carbon for good and bad water", color = "Mean and median")
 
 ```
+
+The 'Organic_carbon' variable seems pretty normally distributed. We can see that the 'Organic_carbon' variable is close to symmetric (median=mean). The value of the 'Organic_carbon' of the non-potable water is higher than the potable one. The WHO does not recommend a limit of 'Organic_carbon'.
 
 ```{r}
 ggplot(df, aes(x=Trihalomethanes, fill=factor(Potability))) +
@@ -186,6 +202,8 @@ ggplot(df, aes(x=Trihalomethanes, fill=factor(Potability))) +
 
 ```
 
+The 'Trihalomethanes' variable seems pretty normally distributed. We can see that the 'Trihalomethanes' variable is close to symmetric (median=mean). The value of the 'Trihalomethanes' of the non-potable water is higher than the potable one. The desirable limit of 'Trihalomethanes' is 80 ppm.
+
 ```{r}
 ggplot(df, aes(x=Turbidity, fill=factor(Potability))) +
     geom_histogram( color="#e9ecef", alpha=0.6, position = 'identity') +
@@ -198,9 +216,10 @@ ggplot(df, aes(x=Turbidity, fill=factor(Potability))) +
 
 ```
 
+The 'Turbidity' variable seems pretty normally distributed. We can see that the 'Turbidity' variable is close to symmetric (median=mean). The value of the 'Turbidity' of the non-potable water is higher than the potable one. The desirable limit of 'Turbidity' is 5 NTU (WHO).
 
+### Difference between our potable and non-potable water by using a radar chart.
 
-Now let's look at the difference between our Potable and non-potable water using their mean, maximum and minimum value.
 ```{r, fig.width=8, fig.height=8}
 
 par(mfrow=c(1,2))
@@ -259,8 +278,7 @@ radarchart(rad_2  , axistype=1 ,
     )
 ```
 
-Here we used the maximum and 0 for Potability  = 1 and potability = 0 as the range of the of the radar chart. We used the mean of each feature for potability = 1 and 0 to represent their characteristics. We can see that there's not that much difference between them
-
+We used the maximum values and 0 when potability = 1 and potability = 0 as the range of the radar chart. We used the mean of each feature for potability = 1 and potability = 0 to represent their characteristics. We can see that there's not a significant difference between them.
 
 ```{r}
 new_rad = data.frame(ph = c(max(df$ph, na.rm = T),0,mean(df_0$ph, na.rm=T),mean(df_1$ph, na.rm=T)),
@@ -298,33 +316,27 @@ new_rad
 
 ```
 
-In reality, we can see that there's not really a difference between bad and good water which is weird ! We would expect at least some difference in some features.
+In fact, we can see that there is no significant difference between potable and non-potable water. It does not seem realistic at all ! We would expect at least differences between some features.
 
-let's look at the correlation of our variables : 
+### Correlation of our variables : 
+
 ```{r}
 pheatmap(cor(df, use = "complete"), display_numbers = T,cluster_rows = F, cluster_cols = F, fontsize_number = 15)
 ```
 
-They are not correlated at all between each other meaning that we won't have an issue of multicolinearity ! 
+They are not correlated at all between each other. It means that we will not have issues of multicolinearity.
 
-#### Now let's look at our missing values :
+#### Missing values :
+
 ```{r}
 gg_miss_var(df, show_pct = TRUE)
 ```
 
-Without dropping missing values :3276 obs, 10 variables, Potability = 1 : 1278, 0: 1998
-dropping values : 2011 obs, 10 variables, potability = 1 811, 0, 1200 
-We lose 1265 obs. It seems that we more missing values in potability = 0
-Around 23 % of our Sulfate observations have missing values and 15% for ph which is a lot ! We only have 5% of missing values for Trihalomethanes which is already better than the other but still. We will need to deal with those missing values and try to find the best method :
-- Drop them
-- Keep them
-- Impute them by the median
-- impute them using K-NN.
+Our initial dataset has 3276 rows and 10 features. It has 1278 observations of potable water and 1998 of non-potable water.
+If we drop the missing values, our dataset has 2011 rows and 10 features. It has 811 observations of potable water and 1200 of non-potable water. We would lose 1265 observations. It seems that we have more missing values for the non-potable water.
+We can see that almost 25% of the 'Sulfate' and 15% of 'ph' observations have missing values. This is a huge proportion. In comparison, we note that only 5% of the 'Trihalomethanes' observations have missing value. We could check whether the missing values follow a pattern.
 
-
-First let's look if the missing values have a pattern :
-
-
+#### Potential pattern of the missing values :
 
 ```{r}
 library(missRanger)
@@ -345,11 +357,12 @@ library(visdat)
 vis_miss(df)
 ```
 
-Well it's hard to say but it looks like the missing observations are missing at random. They don't really follow a pattern.
+Looking at all the previous graphs, it seems that the missing observations do not really follow a pattern. It does not seem that the NAs are missing in a systematic way.
 
-#### We will now need to think to either drop those missing values or to impute them. We will use different imputation techniques on a train set so that we avoid data leackage and we will use a 5 cross validation to validate our results.
+#### Comparing different methods to find the best one to deal with the missing values. 
 
-Partitioning our data: we will use the stratified sampling method because I want to ensure that i have the same proportion of water quality in each of our samples. We will create a train set that represents 60% our of data and a validation set that will represents 40 % of our data.
+Partitioning our data: We will use the stratified sampling method because we want to ensure that we have the same proportion of water quality in each of our samples. We will create a train set that represents 60% our of data and a validation set that will represents 40 % of our data.
+
 ```{r}
 set.seed(1)
 df$Potability = as.factor(df$Potability) ### changing our Potability variables into a factor since it's a category ! 
@@ -362,9 +375,10 @@ val.set= df[-train.index,]
 head(train.set)
 ```
 
-#### Cross validation with 5 folds for imputation : We are going to use a decision tree since they handle missing values 
+#### Cross validation with 5 folds for imputation 
 
-Here without dropping our missing values 
+Decision tree (without dropping any missing values because DT handle missing values).
+
 ```{r}
 set.seed(1) 
 
@@ -384,8 +398,8 @@ f11 = max(normal_cv_tree$results$F1)
 #results = data.frame("Accuracy" = accu1, )
 ```
 
+Decision tree with median imputation.
 
-CV : Using median imputation 
 ```{r}
 set.seed(1) ### To have the same results  !!! 
 
@@ -405,7 +419,8 @@ med_acc = max(median_cv_tree$results$Accuracy)
 med_f1 = max(median_cv_tree$results$F1)
 ```
 
-K-NN imputation method during our cross-validation
+Decision tree with K-NN imputation. 
+
 ```{r}
 set.seed(1) 
 
@@ -424,6 +439,8 @@ print(knnimpute_cv_tree)
 knn_acc = max(knnimpute_cv_tree$results$Accuracy)
 knn_f1 = max(knnimpute_cv_tree$results$F1)
 ```
+
+Decision tree (we drop all the missing values).
 
 ```{r}
 set.seed(1) ### To have the same results  !!! 
@@ -447,16 +464,16 @@ drop_f1 = max(drop_cv_tree$results$F1)
 ```
 
 ```{r}
-results_cv_impute = data.frame("Accuracy" = c(accu1, med_acc, knn_acc, drop_acc), "F1 Score" = c(f11, med_f1, knn_f1, drop_f1),"Method" = c("No dropping","Median imputation","K-NN imputation","Dropping"))
+results_cv_impute = data.frame("Accuracy" = c(accu1, med_acc, knn_acc, drop_acc), "F1 Score" = c(f11, med_f1, knn_f1, drop_f1),"Method" = c("No dropping","Median imputation","K-NN imputation","Dropping the NAs"))
 
-results_cv_impute %>% gather(Attributes, Values, 1:2) %>% ggplot(aes(x = Attributes, y = Values, fill = Method)) + scale_fill_viridis_d() + geom_bar(stat = "identity",position = "dodge") + geom_text(mapping= aes(x = Attributes, y=Values,label = round(Values,4)), vjust=-0.5, size = 2,position = position_dodge(width = .9), col = "red") + labs(title = "Comparaison of Missing values imputation : Dropping, keeping, imputing with median or K-NN", x = "Metrics") + theme_light()
+results_cv_impute %>% gather(Attributes, Values, 1:2) %>% ggplot(aes(x = Attributes, y = Values, fill = Method)) + scale_fill_viridis_d() + geom_bar(stat = "identity",position = "dodge") + geom_text(mapping= aes(x = Attributes, y=Values,label = round(Values,4)), vjust=-0.5, size = 2,position = position_dodge(width = .9), col = "red") + labs(title = "Comparison of the methods to deal with the NAs", x = "Metrics") + theme_light()
 ```
 
+It seems that the K-NN imputation is the best method because it has the highest accuracy and the second F1 score. The median imputation has very similar results (but slightly worse). When we do not drop any NAs, we obtain the highest F1 score but it is very close to the K-NN imputation method and median method. However, for the rest of our project, we need to either impute or drop the missing values to perform, for example, a K-NN model or a neural nets. Therefore, the model with the best results and meeting its criteria is the K-NN imputation.
 
-Looking at those results it seems that knn imputation did the best in accuracy and F1 score compared to the Median imputation but we can see that the difference is small. Also not dropping variables leads to a better F1 score in general but it's very close to the K-nn imputation method and median method. The problem is that we will need to either impute them or drop the missing value to perform for example a K-NN model or a neural nets.So we will chose the one that maximizes F1 and accuracy and it is the K-NN imputation method !  
+### Preprocessing
 
-
-### Preprocessing : we will make 2 types of preprocessing. One using the range method and one using the center and scale method and another one using the range method (for neural net) but it's always good so we can compare the 2 methods.
+we will use 2 different preprocessing methods. The first one using the range method and the second one using the center and scale method. 
 
 ```{r}
 
@@ -477,9 +494,8 @@ valid.norm = predict(norm_values, val.set)
 
 ```
 
-
-
 ### Could use this to scale back our variables
+
 ```{r}
 scale_back_z_score_train <- function(z,var) {
   sd_train = sd(train.set[,var], na.rm = T)
@@ -498,13 +514,14 @@ scale_back_z_score_valid <- function(z,var) {
 knn_set_scale_back = train.norm
 
 #colnames(train.norm[-10]) Could do this to scale back our data
-for (i in colnames(knn_set_scale_back[-10])) {
-  knn_set_scale_back[i] = scale_back_z_score(knn_set_scale_back[i],i)
-}
+#for (i in colnames(knn_set_scale_back[-10])) {
+ # knn_set_scale_back[i] = scale_back_z_score(knn_set_scale_back[i],i)
+#}
 
 ```
 
-#### Let's look at the difference in the distribution when we imputed the missing values with knn and without doiing it :
+#### Differences of the distribution when we impute the missing values with and without K-NN:
+
 ```{r}
 library(reshape2)
 ph_group = cbind(train.set$ph, knn_set_scale_back$ph)
@@ -530,9 +547,11 @@ diff_triha = ggplot(trihalomethanes_group, aes(x=value, group = variable, fill =
 plot_grid(diff_ph, diff_sulfate, diff_triha)
 ```
 
-The distribution didn't really change that much except for Sulfate where we had 25% of missing values but this was predicted. In general our distribution became a little bit more centered but it doesn't seem like there's a huge impact.
+The distribution does not really change except for 'Sulfate' variable where we had 25% of missing values. In general, our distribution becomes a bit more centered but the impact does not seem that important.
 
-3D graph to represent our water quality based on ph, Organic_carbon and Turbidity.
+#### 3D graph 
+
+It represents our water quality based on 'ph', 'Organic_carbon' and 'Turbidity'.
 ```{r}
 fig <- plot_ly(knn_set_scale_back, x = ~ph, y = ~Turbidity, z = ~Organic_carbon, color = ~Potability)
 fig <- fig %>% add_markers()
