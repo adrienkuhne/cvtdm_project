@@ -518,32 +518,38 @@ scale_back_z_score <- function(z,var) {
   return(x)
 }
  
-knn_set_scale_back = train.norm
 
-#colnames(train.norm[-10])# Could do this to scale back our data
-for (i in colnames(knn_set_scale_back[-10])) {
-  knn_set_scale_back[i] = scale_back_z_score(knn_set_scale_back[i],i)
+train_scaled_back = train.norm
+valid_scaled_back = valid.norm
+#colnames(train.norm[-10]) Could do this to scale back our data
+for (i in colnames(train_scaled_back[-10])) {
+  train_scaled_back[i] = scale_back_z_score(train_scaled_back[i],i)
+}
+
+for (i in colnames(valid_scaled_back[-10])) {
+  valid_scaled_back[i] = scale_back_z_score(valid_scaled_back[i],i)
 }
 
 ```
+
 
 #### Differences of the distribution when we impute the missing values with and without K-NN:
 
 ```{r}
 library(reshape2)
-ph_group = cbind(train.set$ph, knn_set_scale_back$ph)
+ph_group = cbind(train.set$ph, train_scaled_back$ph)
 ph_group = as.data.frame(ph_group)
 colnames(ph_group) = c("ph no imputation", "ph knn imputation")
 ph_group = melt(ph_group)
 diff_ph = ggplot(ph_group, aes(x=value, group = variable, fill = variable)) + geom_density(alpha = 0.5)+labs(title = "Distribution of PH with and without knn imputation") + scale_fill_manual(values = c("red","blue"))
 
-sulfate_group = cbind(train.set$Sulfate, knn_set_scale_back$Sulfate)
+sulfate_group = cbind(train.set$Sulfate, train_scaled_back$Sulfate)
 sulfate_group = as.data.frame(sulfate_group)
 colnames(sulfate_group) = c("sulfate no imputation", "sulfate knn imputation")
 sulfate_group = melt(sulfate_group)
 diff_sulfate = ggplot(sulfate_group, aes(x=value, group = variable, fill = variable)) + geom_density(alpha = 0.5)+labs(title = "Distribution of sulfate with and without knn imputation") + scale_fill_manual(values = c("red","blue"))
 
-trihalomethanes_group = cbind(train.set$Trihalomethanes, knn_set_scale_back$Trihalomethanes)
+trihalomethanes_group = cbind(train.set$Trihalomethanes, train_scaled_back$Trihalomethanes)
 trihalomethanes_group = as.data.frame(trihalomethanes_group)
 colnames(trihalomethanes_group) = c("trihalomethanes no imputation", "trihalomethanes knn imputation")
 trihalomethanes_group = melt(trihalomethanes_group)
@@ -577,45 +583,35 @@ First we need to find the best K for our model so let's do a cross-validation :
 ```{r}
 set.seed(1) 
 
-tr_control = trainControl(method = "cv",number = 5 ,summaryFunction =  multiClassSummary) 
+tr_control = trainControl(method = "cv",number = 5 ,summaryFunction =  multiClassSummary) # 5 fold CV
 
-knn_cross_val = train(Potability ~ ., #. is to tell that we use all our variables as predictors on personal loan
-               data = train.range,    ## on our training data
-               method = "knn",    ### we use classification tree
-               trControl = tr_control, 
+knn_cross_val = train(Potability ~ ., # Predicted class
+               data = train_scaled_back,    # on our training data
+               method = "knn",    # we use knn
+               trControl = tr_control,
+               preProcess="range", # preProcess our data with the range method for every fold
                tuneGrid = data.frame(k = seq(50)))
 print(knn_cross_val)
 knn_cross_val$results[max(knn_cross_val$results$F1) == knn_cross_val$results$F1, c("k","F1")]
 
 ```
 
-The best k that maximizes our accuracy and our F1 score at the same time is k = 42
+The best k that maximizes our accuracy is k = 18
 
 ```{r}
 library(class)
-knn_res = knn(train.range[-10], valid.range[-10], cl=train.range$Potability,k=42, prob = T)
+knn_res = knn(train.range[-10], valid.range[-10], cl=train.range$Potability,k=18, prob = T)
 confusion_knn = confusionMatrix(knn_res, valid.range$Potability,positive = "1")
 confusion_knn
 accuracy_knn = confusion_knn$overall["Accuracy"]
 ```
 
-as we can see with knn we predicted poorly our class. 61.76 % of accuracy is really not good. We predicted our class 0 (not potable water) better than potable water. Why ? Well it's prbably because we have more non potable water in our data set and having a large k make our prediction based on the more prevalent class which is non potable water.
+as we can see with knn we predicted poorly our class 0.6267  of accuracy is really not good. We predicted our class 0 (not potable water) better than potable water. Why ? Well it's probably because we have more non potable water in our data set and having a large k make our prediction based on the more prevalent class which is non potable water.
 
 ### Now let's perform a decision tree : 
 for a tree we don't need to work with scaled variables so let's scale back a train and test set:
 Scaling back our train and validations sets : 
-```{r}
-train_scaled_back = train.norm
-valid_scaled_back = valid.norm
-#colnames(train.norm[-10]) Could do this to scale back our data
-for (i in colnames(train_scaled_back[-10])) {
-  train_scaled_back[i] = scale_back_z_score(train_scaled_back[i],i)
-}
 
-for (i in colnames(valid_scaled_back[-10])) {
-  valid_scaled_back[i] = scale_back_z_score(valid_scaled_back[i],i)
-}
-```
 
 Building a full grown tree : 
 ```{r}
@@ -902,8 +898,8 @@ set.seed(1)
 control <- trainControl(method='cv', 
                         number=5)
 
-neural.net_cv <- train(Potability ~ ., data = train.range,
-    method = "nnet",  trControl = control)
+neural.net_cv <- train(Potability ~ ., data = train_scaled_back,
+    method = "nnet",  trControl = control, preProcess = "range")
 
 neural.net_cv$bestTune
 ```
