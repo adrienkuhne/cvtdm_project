@@ -606,7 +606,11 @@ confusion_knn
 accuracy_knn = confusion_knn$overall["Accuracy"]
 ```
 
+<<<<<<< Updated upstream
 as we can see with knn we predicted poorly our class 0.6267  of accuracy is really not good. We predicted our class 0 (not potable water) better than potable water. Why ? Well it's probably because we have more non potable water in our data set and having a large k make our prediction based on the more prevalent class which is non potable water.
+=======
+as we can see with knn we predicted poorly our class. 61.76 % of accuracy is really not good. We predicted our class 0 (not potable water) better than potable water. Why ? Well it's probably because we have more non potable water in our data set and having a large k make our prediction based on the more prevalent class which is non potable water.
+>>>>>>> Stashed changes
 
 ### Now let's perform a decision tree : 
 for a tree we don't need to work with scaled variables so let's scale back a train and test set:
@@ -969,71 +973,6 @@ Ensemble average seems to perform better 0.6603 Accuracy. As we can see we have 
 
 
 
-Boosting - Romain
-
-```{r}
-set.seed(1)
-library(adabag)
-
-boost <- boosting(Potability ~ ., data = train.range)
-pred.boost <- predict(boost, valid.range)
-boost.cm = confusionMatrix(as.factor(pred.boost$class), valid.range$Potability)
-accuracy.df = cbind(accuracy.df, boost.tree=boost.cm$overall[1])
-
-boost.cm
-```
-
-As we can see, the boosting method does not predict well.
-
-Bagging - Romain
-
-```{r}
-set.seed(1)
-
-bagt <- bagging(Potability ~ ., data = train.range)
-pred.bag <- predict(bagt, valid.range)
-bag.cm = confusionMatrix(as.factor(pred.bag$class), valid.range$Potability)
-accuracy.df = cbind(accuracy.df, bag.tree=bag.cm$overall[1])
-
-bag.cm
-```
-
-As we can see, the bagging method does not predict well either.
-
-Random forest - Romain
-
-```{r}
-set.seed(1)
-library(randomForest)
-rf <- randomForest(Potability ~ ., data = train.range, mtry=4, importance = T)
-pred.rf <- predict(rf, valid.range)
-
-rf.cm = confusionMatrix(as.factor(pred.rf), valid.range$Potability)
-accuracy.df = cbind(accuracy.df, rf=rf.cm$overall[1])
-
-rf.cm
-```
-
-Other parameters:
-```{r}
-set.seed(1)
-rf2=randomForest(Potability ~ ., data = train_scaled_back, ntree = 1000, mtry = 5, nodesize = 1, importance = TRUE)
-varImpPlot(rf2, type = 1) #Optional I think.
-pred.rf2=predict(rf2, valid_scaled_back, type = "class")
-rf.cm2=confusionMatrix(pred.rf2, valid_scaled_back$Potability) 
-rf.cm2
-
-#We obtain better results with the first parameters
-```
-As we can see, the random forest method does not predict well either.
-
-
-Adding K-NN to the Dataframe.
-```{r}
-accuracy.df = cbind(accuracy.df, knn = confusionMatrix(knn_res, valid.range$Potability)$overall[1])
-
-accuracy.df #Comparing the different methods.
-```
 
 
 
