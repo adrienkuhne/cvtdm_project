@@ -566,7 +566,7 @@ The distribution does not really change except for 'Sulfate' variable where we h
 
 It represents our water quality based on 'ph', 'Organic_carbon' and 'Turbidity'.
 ```{r}
-fig <- plot_ly(knn_set_scale_back, x = ~ph, y = ~Turbidity, z = ~Organic_carbon, color = ~Potability)
+fig <- plot_ly(train_scaled_back, x = ~ph, y = ~Turbidity, z = ~Organic_carbon, color = ~Potability)
 fig <- fig %>% add_markers()
 fig <- fig %>% layout(scene = list(xaxis = list(title = 'ph'),
                      yaxis = list(title = 'Turbidity'),
@@ -906,22 +906,26 @@ neural.net_cv <- train(Potability ~ ., data = train_scaled_back,
     method = "nnet",  trControl = control, preProcess = "range")
 
 neural.net_cv$bestTune
+neural.net_cv
 ```
 
 Using Cross-validation, we should use 5 nodes in 1 hidden layer and decay = 0.1 is the regularization parameter to avoid over-fitting
 
-
 ```{r}
-nn_predict = predict(neural.net_cv, valid.range)
-nn_predict_proba = predict(neural.net_cv, valid.range, type = "prob")[,2]
-confusion_nn_cv =confusionMatrix(nn_predict, valid.range$Potability, positive = "1")
+nn_predict = predict(neural.net_cv$finalModel, valid.range, type = "class")
+nn_predict_proba = predict(neural.net_cv$finalModel, valid.range, type = "raw")
+confusion_nn_cv =confusionMatrix(as.factor(nn_predict), valid.range$Potability, positive = "1")
 confusion_nn_cv
-accuracy_nn = confusionMatrix(nn_predict, valid.range$Potability, positive = "1")$overall["Accuracy"]
-#train_predict_nn = predict(neural.net_cv, train.range) Check if we were overfitting but not at all ! 
+accuracy_nn = confusionMatrix(as.factor(nn_predict), valid.range$Potability, positive = "1")$overall["Accuracy"]
+#train_predict_nn = predict(neural.net_cv, train.range) #Check if we were overfitting but not at all ! 
 #confusionMatrix(train_predict_nn, train.range$Potability, positive = "1")
 ```
 
-Accuracy : 0.687 which is the best we have seen so far ! 
+
+
+Accuracy : 0.6855 which is the best we have seen so far ! 
+
+
 
 
 
@@ -935,7 +939,6 @@ ggplot(accuracy_all, aes(x=Model, y = Accuracy, fill = Accuracy)) + geom_bar(sta
 
 ```{r}
 proba_weird = attr(knn_res,"prob") # Returns only the highest proba so I will compare the proba to the outcome to find if it's the proba of being 1 or 0 ...
-knn_res
 proba_new_knn = proba_weird + as.numeric(as.character(knn_res))
 #proba_new_knn
 
