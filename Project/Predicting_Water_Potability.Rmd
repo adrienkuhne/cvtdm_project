@@ -332,6 +332,7 @@ new_rad
 
 In fact, we can see that there is no significant difference between potable and non-potable water. It does not seem realistic at all ! We would expect at least differences between some features.
 
+
 ### Correlation of our variables : 
 
 ```{r}
@@ -375,14 +376,14 @@ Looking at all the previous graphs, it seems that the missing observations do no
 
 #### Comparing different methods to find the best one to deal with the missing values. To know which method of imputation performs better, we will need to perform a cross validation using a decision tree as a baseline since it handles missing values. During the Cross-validation, we will impute the missing values based on the median, or knn of the train set on our validation set. For example, with a 5 fold cross validation, it means that 80 % of our training set will be 4 fold and 20% will represent 1 fold. During the Cross validation, the 4 folds will impute its missing values its median or knn than it will do the same of the other fold (the validation one that represents 20%) based on the training value since we want to avoid data leakage. We will choose the method of imputation that performs the best. Here we will use K-NN, median imputation and dropping values and compare it to not dropping values.
 
-Partitioning our data: We will use the stratified sampling method because we want to ensure that we have the same proportion of water quality in each of our samples. We will create a train set that represents 60% our of data and a validation set that will represents 40 % of our data.
+Partitioning our data: We will use the stratified sampling method because we want to ensure that we have the same proportion of water quality in each of our samples. We will create a train set that represents 60% our of data and a test set that represents 40 % of our data.
 
 ```{r}
 set.seed(1)
 df$Potability = as.factor(df$Potability) ### changing our Potability variables into a factor since it's a category ! 
 train.index = createDataPartition(df$Potability, p = .6, list = FALSE)
 train.set = df[ train.index,] ### 60%
-val.set= df[-train.index,]
+test.set= df[-train.index,] ### 40% test
 ```
 
 ```{r}
@@ -412,6 +413,8 @@ f11 = max(normal_cv_tree$results$F1)
 #results = data.frame("Accuracy" = accu1, )
 ```
 
+Without dropping values and by using a decision tree, the accuracy of our model using a 5 fold cross-validation is 0.6327.
+
 Decision tree with median imputation.
 
 ```{r}
@@ -433,6 +436,8 @@ med_acc = max(median_cv_tree$results$Accuracy)
 med_f1 = max(median_cv_tree$results$F1)
 ```
 
+We have an accuracy of 0.63428
+
 Decision tree with K-NN imputation. 
 
 ```{r}
@@ -453,6 +458,8 @@ print(knnimpute_cv_tree)
 knn_acc = max(knnimpute_cv_tree$results$Accuracy)
 knn_f1 = max(knnimpute_cv_tree$results$F1)
 ```
+
+With the KNN imputation we have an accuracy of 0.63834 using a decision tree.
 
 Decision tree (we drop all the missing values).
 
@@ -477,15 +484,18 @@ drop_acc = max(drop_cv_tree$results$Accuracy)
 drop_f1 = max(drop_cv_tree$results$F1)
 ```
 
+By dropping our missing values, the decision tree using 5 fold cross-validation gave us an accuracy of 0.6195
+
+#### Comparaison of method of imputation using a 5 fold cross-validation in a decision tree.
 ```{r}
 results_cv_impute = data.frame("Accuracy" = c(accu1, med_acc, knn_acc, drop_acc), "F1 Score" = c(f11, med_f1, knn_f1, drop_f1),"Method" = c("No dropping","Median imputation","K-NN imputation","Dropping the NAs"))
 
 results_cv_impute %>% gather(Attributes, Values, 1:2) %>% ggplot(aes(x = Attributes, y = Values, fill = Method)) + scale_fill_viridis_d() + geom_bar(stat = "identity",position = "dodge") + geom_text(mapping= aes(x = Attributes, y=Values,label = round(Values,4)), vjust=-0.5, size = 2,position = position_dodge(width = .9), col = "red") + labs(title = "Comparison of the methods to deal with the NAs", x = "Metrics") + theme_light()
 ```
 
-It seems that the K-NN imputation is the best method because it has the highest accuracy and the second F1 score. The median imputation has very similar results (but slightly worse). When we do not drop any NAs, we obtain the highest F1 score but it is very close to the K-NN imputation method and median method. However, for the rest of our project, we need to either impute or drop the missing values to perform, for example, a K-NN model or a neural nets. Therefore, the model with the best results and meeting its criteria is the K-NN imputation.
+It seems that the K-NN imputation is the best method because it has the highest accuracy and the second F1 score. The median imputation has very similar results (but slightly worse). When we do not drop any NAs, we obtain the highest F1 score but it is very close to the K-NN imputation method and median method. However, for the rest of our project, we need to either impute or drop the missing values to perform, for example, a K-NN model or a neural nets. Therefore, the model with the best results and meeting these criteria is the K-NN imputation.
 
-### Preprocessing using K-NN on our train and valid set. WE will do the range and z score method.
+### Preprocessing using K-NN on our train and valid set. We will do the range and z score method.
 
 we will use 2 different preprocessing methods. The first one using the range method and the second one using the center and scale method. 
 
@@ -494,12 +504,12 @@ we will use 2 different preprocessing methods. The first one using the range met
 range_values = preProcess(train.set, method = c("knnImpute", "range")) ### range method that we will use for neural nets and knn mostly
 
 train.range = predict(range_values, train.set)
-valid.range = predict(range_values, val.set)
+test.range = predict(range_values, test.set)
 
 
 norm_values = preProcess(train.set, method = c("knnImpute", "center","scale")) ### z score method (-mean / sd)
 train.norm = predict(norm_values, train.set)
-valid.norm = predict(norm_values, val.set)
+test.norm = predict(norm_values, test.set)
 
 #test = train.set
 #norm_values = preProcess(train.set, method = c("range"))
@@ -508,7 +518,7 @@ valid.norm = predict(norm_values, val.set)
 
 ```
 
-### Could use this to scale back our variables
+### Creating a function to scale back our train and test set from the normalisation of our data. We will need to to work with cross-validation and also to work with tree models and the logistic regression.
 
 ```{r}
 scale_back_z_score <- function(z,var) {
@@ -520,21 +530,21 @@ scale_back_z_score <- function(z,var) {
  
 
 train_scaled_back = train.norm
-valid_scaled_back = valid.norm
+test_scaled_back = test.norm
 #colnames(train.norm[-10]) Could do this to scale back our data
 for (i in colnames(train_scaled_back[-10])) {
   train_scaled_back[i] = scale_back_z_score(train_scaled_back[i],i)
 }
 
-for (i in colnames(valid_scaled_back[-10])) {
-  valid_scaled_back[i] = scale_back_z_score(valid_scaled_back[i],i)
+for (i in colnames(test_scaled_back[-10])) {
+  test_scaled_back[i] = scale_back_z_score(test_scaled_back[i],i)
 }
 
 ```
 
 
 #### Differences of the distribution when we impute the missing values with and without K-NN:
-
+Here we are going to compare how the K-NN imputation method on the ph, Sulfate and Trihalomethanes variables changed their distribution.
 ```{r}
 library(reshape2)
 ph_group = cbind(train.set$ph, train_scaled_back$ph)
@@ -560,9 +570,9 @@ diff_triha = ggplot(trihalomethanes_group, aes(x=value, group = variable, fill =
 plot_grid(diff_ph, diff_sulfate, diff_triha)
 ```
 
-The distribution does not really change except for 'Sulfate' variable where we had 25% of missing values. In general, our distribution becomes a bit more centered but the impact does not seem that important.
+The distribution does not really change except for 'Sulfate' variable where we had 25% of missing values. In general, our distribution becomes a bit more centered but the impact does not seem that important. It respected the distribution of our variables.
 
-#### 3D graph 
+#### 3D graph using ph, organic carbon and Turbidity to see how our potable and non potable water are dispersed.
 
 It represents our water quality based on 'ph', 'Organic_carbon' and 'Turbidity'.
 ```{r}
@@ -574,12 +584,16 @@ fig <- fig %>% layout(scene = list(xaxis = list(title = 'ph'),
 fig
 ```
 
+We can see that they are all stacked together. It doesn't seem like there's a seperation of the 2 groups. So, it will be hard to classify them correctly using a model. But looking at this graph we can clearly see that our data isn't the best.
 
 #### Implemetation of our models : 
 
+We are going to have as a benchmark the naive rule since it's going to be hard to classify our observations properly. The naive rule is when a model classify all our observation into the most prevalent class. Here, since we have 60.99 % of our observations that are non potable water. The lowest accuracy possible for a model would be to classify every observation into non potable water and get an accuracy of 0.6099. We should be aware of that and at least try to do better then this naive rule.
+
+
 ##### Let's start with KNN : 
 For KNN, it is better to have our train and test set that have value ranged from 0 - 1. So, we will use the train range and valid range sets.
-First we need to find the best K for our model so let's do a cross-validation : 
+First we need to find the best K for our model so let's do a cross-validation with a preprocessing using the range method to make our estimation more robust : 
 ```{r}
 set.seed(1) 
 
@@ -592,30 +606,36 @@ knn_cross_val = train(Potability ~ ., # Predicted class
                preProcess="range", # preProcess our data with the range method for every fold
                tuneGrid = data.frame(k = seq(50)))
 print(knn_cross_val)
-knn_cross_val$results[max(knn_cross_val$results$F1) == knn_cross_val$results$F1, c("k","F1")]
+knn_cv_acc = knn_cross_val$results[max(knn_cross_val$results$Accuracy) == knn_cross_val$results$Accuracy, c("k","Accuracy")]$Accuracy
+knn_cv_acc
 
+knn_cross_val$resample$Accuracy
 ```
 
-The best k that maximizes our accuracy is k = 18
+The best k that maximizes our accuracy is k = 18 and the results of the average accuracy of our cross-validation using k = 18 is 0.631. Now that we know the best tune for our model let's use it for our test set.
 
 ```{r}
+set.seed(1)
 library(class)
-knn_res = knn(train.range[-10], valid.range[-10], cl=train.range$Potability,k=18, prob = T)
-confusion_knn = confusionMatrix(knn_res, valid.range$Potability,positive = "1")
+knn_res = knn(train.range[-10], test.range[-10], cl=train.range$Potability,k=18, prob = T)
+confusion_knn = confusionMatrix(knn_res, test.range$Potability,positive = "1")
 confusion_knn
 accuracy_knn = confusion_knn$overall["Accuracy"]
 ```
 
-<<<<<<< Updated upstream
-as we can see with knn we predicted poorly our class 0.6267  of accuracy is really not good. We predicted our class 0 (not potable water) better than potable water. Why ? Well it's probably because we have more non potable water in our data set and having a large k make our prediction based on the more prevalent class which is non potable water.
-=======
-as we can see with knn we predicted poorly our class. 61.76 % of accuracy is really not good. We predicted our class 0 (not potable water) better than potable water. Why ? Well it's probably because we have more non potable water in our data set and having a large k make our prediction based on the more prevalent class which is non potable water.
->>>>>>> Stashed changes
+as we can see with knn we predicted poorly our class 0.6305 of accuracy is really not that good. We predicted our class 0 (not potable water) better than potable water. Why ? Well it's probably because we have more non potable water in our data set and having a large k make our prediction based on the more prevalent class which is non potable water.
+
+```{r}
+colours = c("#599ad3", "#f9a65a")
+res_knn = data.frame("Accuracy" = c(knn_cv_acc, accuracy_knn), "Sets"=c("avg cross-validation","test"))
+ggplot(res_knn, aes(x=Sets, y=Accuracy, fill = Sets)) + geom_bar(stat = "identity") + labs(title = "Accuracy CV using training set VS test set") + scale_fill_manual(values = colours) + geom_text(mapping= aes(x = Sets, y=Accuracy,label = round(Accuracy,4)), vjust=-0.5, size = 2, col = "red")
+```
+
+As we can see, the accuracy of the average 5 fold cross-validation performed on our training set is very close to the one of our test set. So, I don't think we are overfitting since the accuracy is quite similar for the 2 cases.
 
 ### Now let's perform a decision tree : 
 for a tree we don't need to work with scaled variables so let's scale back a train and test set:
 Scaling back our train and validations sets : 
-
 
 Building a full grown tree : 
 ```{r}
@@ -623,7 +643,7 @@ set.seed(1)
 train_tree = rpart(Potability ~ . , data=train_scaled_back, method = "class", control=rpart.control(maxdepth=30,cp=0, minsplit = 1,minbucket = 1, xval = 5)) 
 ```
 
-Pruning our full grown tree using 5 fold cross validation : 
+Pruning our full grown tree using 5 fold cross-validation : 
 ```{r}
 library(rattle)
 prune_cp.index = which.min(train_tree$cptable[,"xerror"])
@@ -634,27 +654,74 @@ pruned_train_tree <- prune(train_tree, cp = prune_cp)
 fancyRpartPlot(pruned_train_tree)
 ```
 
+Looking at the tree, it seems that sulfate is the most important variable followed by harness and Trihalomethanes since they are the first one to start the split of our data.
+
 ```{r}
-classificationtree_valid_predict = predict(pruned_train_tree, valid_scaled_back , type = "class")
-classificationtree_valid_proba = predict(pruned_train_tree, valid_scaled_back , type = "prob")[,2]
-confusion_tree = confusionMatrix(classificationtree_valid_predict, valid_scaled_back$Potability, positive = "1")
+### CV train accuracy : 
+classificationtree_train_predict = predict(pruned_train_tree, train_scaled_back , type = "class")
+confusionMatrix(classificationtree_train_predict, train_scaled_back$Potability, positive = "1")
+
+#### test accuracy
+classificationtree_test_predict = predict(pruned_train_tree, test_scaled_back , type = "class")
+classificationtree_test_proba = predict(pruned_train_tree, test_scaled_back , type = "prob")[,2]
+confusion_tree = confusionMatrix(classificationtree_test_predict, test_scaled_back$Potability, positive = "1")
 confusion_tree
 accuracy_tree = confusion_tree$overall["Accuracy"]
+
+train_tree_acc = confusionMatrix(classificationtree_train_predict, train_scaled_back$Potability, positive = "1")$overall["Accuracy"]
 ```
 
 We can see that with a tree we have an accuracy of 63.44% which is better than with knn ! The balanced accuracy is at 56.9 % meaning that we are doing a little bit better than by guessing randomly. It is clear and normal that we get those kind of results since it seems that the data set was weird. Indeed we had same values for all the variables even if they were potable or non potable water
+
+```{r}
+colours = c("#599ad3", "#f9a65a")
+tree_res = data.frame("Accuracy" = c(train_tree_acc, accuracy_tree), "Sets"=c("CV pruned tree train","pruned tree test"))
+ggplot(tree_res, aes(x=Sets, y=Accuracy, fill = Sets)) + geom_bar(stat = "identity") + labs(title = "Accuracy CV using training set VS test set") + scale_fill_manual(values = colours) + geom_text(mapping= aes(x = Sets, y=Accuracy,label = round(Accuracy,4)), vjust=-0.5, size = 2, col = "red")
+```
+
 
 ### Naive bayes : don't need scaling
 ```{r}
 library(e1071)
 nbayes.model = naiveBayes(Potability ~ ., data = train_scaled_back)
-nbayes.predict = predict(nbayes.model, valid_scaled_back)
-nbayes_predict_proba = predict(nbayes.model, valid_scaled_back,type = "raw")[,2]
-confusion_nb = confusionMatrix(nbayes.predict, valid_scaled_back$Potability, positive = "1")
+nbayes.predict = predict(nbayes.model, test_scaled_back)
+nbayes_predict_proba = predict(nbayes.model, test_scaled_back,type = "raw")[,2]
+confusion_nb = confusionMatrix(nbayes.predict, test_scaled_back$Potability, positive = "1")
 accuracy_nb = confusion_nb$overall["Accuracy"]
+confusion_nb
+accuracy_nb
+confusionMatrix(predict(nbayes.model, train_scaled_back), train_scaled_back$Potability, positive = "1")
 ```
 
 Accuracy : 0.6237, Balanced Accuracy : 0.555 but we still struggle to predict well.
+
+```{r, echo=FALSE,warning=FALSE,message=FALSE,error=FALSE, results='hide',fig.keep='all'}
+set.seed(1) 
+
+tr_control = trainControl(method = "cv",number = 5) # 5 fold CV
+
+nb_cv = train(Potability ~ ., # Predicted class
+               data = train_scaled_back,    # on our training data
+               method = "nb",    # we use knn
+               trControl = tr_control,
+              )
+               
+confusionMatrix(nb_cv)
+nb_cv_acc = nb_cv$results[1,"Accuracy"]
+#knn_cv_acc = knn_cross_val$results[max(knn_cross_val$results$Accuracy) == knn_cross_val$results$Accuracy, #c("k","Accuracy")]$Accuracy
+#knn_cv_acc
+
+#knn_cross_val$resample$Accuracy
+```
+
+```{r}
+colours = c("#599ad3", "#f9a65a")
+nb_res = data.frame("Accuracy" = c(nb_cv_acc, accuracy_nb), "Sets"=c("Avg 5 fold CV train","test"))
+ggplot(nb_res, aes(x=Sets, y=Accuracy, fill = Sets)) + geom_bar(stat = "identity") + labs(title = "Accuracy CV using training set VS test set") + scale_fill_manual(values = colours) + geom_text(mapping= aes(x = Sets, y=Accuracy,label = round(Accuracy,4)), vjust=-0.5, size = 2, col = "red")
+```
+
+Here using NB cross-validation or just using simply naive bayes gives us the same results on our test set.
+
 
 ### Boosting : 
 
@@ -668,33 +735,40 @@ tr_control = trainControl(method = "cv",number = 5 ,summaryFunction =  multiClas
 boosted_cv = train(Potability ~ ., #. is to tell that we use all our variables as predictors on personal loan
                data = train_scaled_back,    ## on our training data
                method = "adaboost",    ### we use classification tree
-               tuneLength=2,
+             
                trControl = tr_control)
 print(boosted_cv)
 ```
 
-Accuracy was used to select the optimal model using the largest value.
-The final values used for the model were nIter = 100 and method = Adaboost.M1.
+Accuracy was used to select the optimal model using the largest value. CV Accuracy = 0.6337712
+The final values used for the model were nIter = 150 (150 trees) and method = Adaboost.M1.
 
+Let's use our cv model to predict our test data.
 ```{r}
 set.seed(1)
-boost = boosting(Potability~., data = train_scaled_back, type = "class", mfinal = 100)
+cv_boost_acc = 0.6337712
 
-valid_predict_boost = predict(boost, valid_scaled_back , type = "class")
-valid_predict_boost_proba = predict(boost, valid_scaled_back , type = "prob")$prob[,2]
-confusion_boost = confusionMatrix(as.factor(valid_predict_boost$class), valid_scaled_back$Potability, positive = "1")
+test_predict_boost = predict(boosted_cv, test_scaled_back)
+test_predict_boost_proba = predict(boosted_cv, test_scaled_back , type = "prob")[,2]
+confusion_boost = confusionMatrix(as.factor(test_predict_boost), test_scaled_back$Potability, positive = "1")
 confusion_boost
 accuracy_boost = confusion_boost$overall["Accuracy"]
+
 ```
+
 
 ```{r}
-importanceplot(boost)
+plot(varImp(boosted_cv), main="Variable Importance with boosting")
 ```
 
+Sulfate, ph and Harness are the 3 most important variables in this model.
 
-
-
-Accuracy : 0.6359,Balanced Accuracy : 0.5943    Already better. 
+Accuracy : 0.642,Balanced Accuracy : 0.6025    Already better. 
+```{r}
+colours = c("#599ad3", "#f9a65a")
+boost_res = data.frame("Accuracy" = c(cv_boost_acc, accuracy_boost), "Sets"=c("Avg 5 fold CV train","test"))
+ggplot(boost_res, aes(x=Sets, y=Accuracy, fill = Sets)) + geom_bar(stat = "identity") + labs(title = "Accuracy CV using training set VS test set") + scale_fill_manual(values = colours) + geom_text(mapping= aes(x = Sets, y=Accuracy,label = round(Accuracy,4)), vjust=-0.5, size = 2, col = "red")
+```
 
 ### bagging
 
@@ -705,33 +779,39 @@ tr_control = trainControl(method = "cv",number = 5 ,summaryFunction =  multiClas
 bagged_cv = train(Potability ~ ., #. is to tell that we use all our variables as predictors on personal loan
                data = train_scaled_back,    ## on our training data
                method = "treebag",    ### we use classification tree
-            
+               nbagg = 200,
                trControl = tr_control
               )
 print(bagged_cv)
+cv_bagged_acc = bagged_cv$results$Accuracy
+plot(varImp(bagged_cv), main="Variable Importance with Bagging")
 ```
 
-Unfortunately there's no tuning parameter for this method. (But Bagged AdaBoost has ! )
 
+
+Unfortunately there's no tuning parameter for this method. (But Bagged AdaBoost has ! )
+Accuracy of the 5 fold cv = 0.6541236 using 200 trees
+
+Now let's look on our test data.
 ```{r}
 set.seed(1)
-bag = bagging(Potability~., data = train_scaled_back, type = "class")
 
-
-valid_predict_bag = predict(bag, valid_scaled_back , type = "class")
-valid_predict_bag_prob = valid_predict_bag$prob[,2]
+test_predict_bag = predict(bagged_cv, test_scaled_back , type = "raw")
+test_predict_bag_prob = predict(bagged_cv, test_scaled_back , type = "prob")[,2]
 ### to get the class, we need to use $class
 #valid_predict_boost
-confusion_bag = confusionMatrix(as.factor(valid_predict_bag$class), valid_scaled_back$Potability, positive = "1")
+confusion_bag = confusionMatrix(as.factor(test_predict_bag), test_scaled_back$Potability, positive = "1")
 confusion_bag
 accuracy_bag = confusion_bag$overall["Accuracy"]
 ```
 
-Accuracy : 0.6511 Balanced Accuracy : 0.56906
 ```{r}
-importanceplot(bag)
+colours = c("#599ad3", "#f9a65a")
+bag_res = data.frame("Accuracy" = c(cv_bagged_acc, accuracy_bag), "Sets"=c("Avg 5 fold CV train","test"))
+ggplot(bag_res, aes(x=Sets, y=Accuracy, fill = Sets)) + geom_bar(stat = "identity") + labs(title = "Accuracy CV using training set VS test set") + scale_fill_manual(values = colours) + geom_text(mapping= aes(x = Sets, y=Accuracy,label = round(Accuracy,4)), vjust=-0.5, size = 2, col = "red")
 ```
 
+Accuracy : 0.6687 Balanced Accuracy : 0.6187
 
 #### Random Forest
 CV
@@ -756,100 +836,69 @@ print(rf_gridsearch)
 
 ```
 
-When using cross validation on random forest using the scaled back data, the best mtry to use is 6
+When using cross validation on random forest using the scaled back data, the best mtry to use is 6. We get a 0.6597 accuracy.
 
 ```{r}
 library(randomForest)
+rf_cv_acc = 0.6597099
 set.seed(1)
 randomf = randomForest(Potability~., data = train_scaled_back,mtry = 6, importance = T )
 
 
-valid_predict_rf = predict(randomf, valid_scaled_back , type = "class")
-valid_predict_rf_proba = predict(randomf, valid_scaled_back , type = "prob")[,2]
+test_predict_rf = predict(randomf, test_scaled_back , type = "class")
+test_predict_rf_proba = predict(randomf, test_scaled_back , type = "prob")[,2]
 
-confusion_rf = confusionMatrix(as.factor(valid_predict_rf), valid_scaled_back$Potability, positive = "1")
+confusion_rf = confusionMatrix(as.factor(test_predict_rf), test_scaled_back$Potability, positive = "1")
 confusion_rf
 accuracy_rf = confusion_rf$overall["Accuracy"]
 varImpPlot(randomf)
 ```
 
 Accuracy : 0.674
-Balanced Accuracy : 0.6228        
+Balanced Accuracy : 0.6228  
 
+the 3 most important variables are ph, Sulfate and Hardness.
+
+```{r}
+colours = c("#599ad3", "#f9a65a")
+rf_res = data.frame("Accuracy" = c(rf_cv_acc, accuracy_rf), "Sets"=c("Avg 5 fold CV train","test"))
+ggplot(rf_res, aes(x=Sets, y=Accuracy, fill = Sets)) + geom_bar(stat = "identity") + labs(title = "Accuracy CV using training set VS test set") + scale_fill_manual(values = colours) + geom_text(mapping= aes(x = Sets, y=Accuracy,label = round(Accuracy,4)), vjust=-0.5, size = 2, col = "red")
+```
 
 #### Logistic Regression
 
 ```{r}
-logit.reg = glm(Potability ~ ., data = train_scaled_back, family = "binomial")
-options(scipen=999)
-summary(logit.reg)
-```
+set.seed(1)
+train_control = trainControl(method = "cv", number = 5)
 
-We can see that no variables are significant ! let's look at which variable we should choose to perform our logistic regression.
+# train the model on training set
+logi_cv = train(Potability ~.,
+               data = train_scaled_back,
+               trControl = train_control,
+               method = "glm",
+               family=binomial())
 
-```{r}
-logi.step = step(logit.reg, direction = "both")
-summary(logi.step)
-```
-
-Doing a stepwise method we see that we should only keep solids
-```{r}
-logi_train = train_scaled_back[, c(3,10)]
-logi_valid = valid_scaled_back[, c(3,10)]
-logistic = glm(Potability~. , data = logi_train, family = "binomial")
-summary(logistic)
+# print cv scores
+summary(logi_cv)
+print(logi_cv)
+confusionMatrix(logi_cv)
 
 ```
 
-```{r}
-best_cutoff = data.frame("cut"=seq(1:99), score = rep(0, 99),f1 = rep(0, 99))
-for (i in seq(1:99)) {
-  logi_test = predict(logistic, logi_valid, type = "response")
-  pred_test= ifelse(logi_test>=i/100,1,0)
-  best_cutoff[i,"score"]= confusionMatrix(as.factor(pred_test), logi_valid$Potability,positive="1")$overall[1]
-  best_cutoff[i,"f1"]= confusionMatrix(as.factor(pred_test), logi_valid$Potability,positive="1")$byClass["F1"]
-  
-  
-}
-best_cutoff[best_cutoff$score == max(best_cutoff$score),]
-```
-
-The best accuracy possible is 0.6099
-
-#### Now the same with all our variables to compare
-```{r}
-best_cutoff = data.frame("cut"=seq(1:99), score = rep(0, 99),f1 = rep(0, 99))
-for (i in seq(1:99)) {
-  logi_test = predict(logit.reg, valid_scaled_back[,-10], type = "response")
-  pred_test= ifelse(logi_test>=i/100,1,0)
-  best_cutoff[i,"score"]= confusionMatrix(as.factor(pred_test), valid_scaled_back$Potability,positive="1")$overall[1]
-  best_cutoff[i,"f1"]= confusionMatrix(as.factor(pred_test), valid_scaled_back$Potability,positive="1")$byClass["F1"]
-  
-  
-}
-best_cutoff[best_cutoff$score == max(best_cutoff$score),]
-```
-
-Best cutoff is 46 % to maximize the accuracy : 0.6137405. We can see that this results is close to our baseline : everything is classified as Not potable since it's the predominant class meaning we would get an accuracy of ~ 0.61. So this model really doesn't perform well.
+No variables are significant.
+0.6093608 accuracy. Here are model classify almost all our classes as 0 since it's the predominant class to maximize its accuracy. Unfortunately, this doesn't give us any information ! Here, it does even worse then then naive rule. Naive rule acc = 0.6099 VS 0.6094. This model classified 0.1% of our data into 1 while it was 0.
 
 ```{r}
-pred.logit.reg = predict(logit.reg, valid_scaled_back[,-10], type = "response")
-
-logi_pred_class = ifelse(pred.logit.reg >= 0.46, 1, 0)
-
-confusion_logi = confusionMatrix(as.factor(logi_pred_class), valid_scaled_back$Potability, positive = "1") #Option I think.
+logi_cv_acc = logi_cv$results$Accuracy
+pred.logit.reg = predict(logi_cv, test_scaled_back[,-10], type = "prob")[,2]
+logi_pred_class = predict(logi_cv, test_scaled_back[,-10], type = "raw")
+confusion_logi = confusionMatrix(predict(logi_cv, test_scaled_back), test_scaled_back$Potability, positive = "1")
 confusion_logi
-
 accuracy_logi = confusion_logi$overall["Accuracy"]
-
-#results.df = data.frame(actual = valid.range$Potability, logit.reg = as.factor(ifelse(pred.logit.reg >= 0.46, 1, 0)), logit.reg.prob = pred.logit.reg)
-
-#accuracy.df = data.frame(logit.reg=confusionMatrix(as.factor(ifelse(pred.logit.reg >= 0.46, 1, 0)), valid.range$Potability)$overall[1])
-
 ```
 
+as you can see its does the same for our test data. this is a pure example of the naive rule where the model classify every observations into the most prevalent class.
 
-We dot better keeping all our variables than just keeping Solids
 
 Let's visualize our results :
 
@@ -886,14 +935,20 @@ ConfusionMatrixInfo <- function( data, predict, actual, cutoff )
 }
 library(data.table)
 library(ggthemr)
-logi_data = data.frame("prediction" = predict(logit.reg, valid_scaled_back[,-10], type = "response"), "True" = valid_scaled_back$Potability )
+logi_data = data.frame("prediction" = predict(logi_cv, test_scaled_back[,-10], type = "prob")[,2], "True" = test_scaled_back$Potability )
 cm_info <- ConfusionMatrixInfo( data = logi_data, predict = "prediction", 
-                                actual = "True", cutoff = .46 )
+                                actual = "True", cutoff = .5 )
 ggthemr("flat")
 cm_info$plot
 ```
 
-We can clearly see that it's not very good but it's the best we can do with the logistic regression. We are very close to the baseline of classifying everything into the predominant class (not potable) to get an accuracy of 0.61.
+We can clearly see that it's not very good. We are doing as good as the baseline (the naive rule). This model give us no real information ! 
+
+```{r}
+colours = c("#599ad3", "#f9a65a")
+logi_res = data.frame("Accuracy" = c(logi_cv_acc, accuracy_logi), "Sets"=c("Avg 5 fold CV train","test"))
+ggplot(logi_res, aes(x=Sets, y=Accuracy, fill = Sets)) + geom_bar(stat = "identity") + labs(title = "Accuracy CV using training set VS test set") + scale_fill_manual(values = colours) + geom_text(mapping= aes(x = Sets, y=Accuracy,label = round(Accuracy,4)), vjust=-0.5, size = 2, col = "red")
+```
 
 #### Neural nets : Here we need to use the train set and validation set that has been preprocessed using the range method. Also, since our variable were symmetrical we don't need to use the log transformation.
 
@@ -907,16 +962,18 @@ neural.net_cv <- train(Potability ~ ., data = train_scaled_back,
 
 neural.net_cv$bestTune
 neural.net_cv
+nn_cv_acc = max(neural.net_cv$results$Accuracy)
+confusionMatrix(neural.net_cv)
 ```
 
 Using Cross-validation, we should use 5 nodes in 1 hidden layer and decay = 0.1 is the regularization parameter to avoid over-fitting
 
 ```{r}
-nn_predict = predict(neural.net_cv$finalModel, valid.range, type = "class")
-nn_predict_proba = predict(neural.net_cv$finalModel, valid.range, type = "raw")
-confusion_nn_cv =confusionMatrix(as.factor(nn_predict), valid.range$Potability, positive = "1")
+nn_predict = predict(neural.net_cv$finalModel, test.range, type = "class")
+nn_predict_proba = predict(neural.net_cv$finalModel, test.range, type = "raw")
+confusion_nn_cv =confusionMatrix(as.factor(nn_predict), test.range$Potability, positive = "1")
 confusion_nn_cv
-accuracy_nn = confusionMatrix(as.factor(nn_predict), valid.range$Potability, positive = "1")$overall["Accuracy"]
+accuracy_nn = confusionMatrix(as.factor(nn_predict), test.range$Potability, positive = "1")$overall["Accuracy"]
 #train_predict_nn = predict(neural.net_cv, train.range) #Check if we were overfitting but not at all ! 
 #confusionMatrix(train_predict_nn, train.range$Potability, positive = "1")
 ```
@@ -925,16 +982,20 @@ accuracy_nn = confusionMatrix(as.factor(nn_predict), valid.range$Potability, pos
 
 Accuracy : 0.6855 which is the best we have seen so far ! 
 
+```{r}
+colours = c("#599ad3", "#f9a65a")
+nn_res = data.frame("Accuracy" = c(nn_cv_acc, accuracy_nn), "Sets"=c("Avg 5 fold CV train","test"))
+ggplot(nn_res, aes(x=Sets, y=Accuracy, fill = Sets)) + geom_bar(stat = "identity") + labs(title = "Accuracy CV using training set VS test set") + scale_fill_manual(values = colours) + geom_text(mapping= aes(x = Sets, y=Accuracy,label = round(Accuracy,4)), vjust=-0.5, size = 2, col = "red")
+```
 
 
-
-
+#### Creating a data frame storing all our result from the test set.
 
 ```{r}
 accuracy_all = data.frame("Model" = 
                             c("K-NN","Naive-Bayes","logistic","Decision_tree","Bagging","Boosting","Random_forest","Neural_nets"),
                           "Accuracy"=c(accuracy_knn, accuracy_nb, accuracy_logi, accuracy_tree, accuracy_bag, accuracy_boost, accuracy_rf, accuracy_nn))
-ggplot(accuracy_all, aes(x=Model, y = Accuracy, fill = Accuracy)) + geom_bar(stat="identity")
+ggplot(accuracy_all, aes(x=Model, y = Accuracy, fill = Accuracy)) + geom_bar(width = 0.8,stat="identity") + scale_fill_viridis_c() + geom_text(mapping= aes(x = Model, y=Accuracy,label = round(Accuracy,4)), vjust=-0.5, size = 2, col = "red") + labs(title = "Accuracy of our models on the Test set")  + theme_pubr()+theme(axis.text.x = element_text(angle=90, vjust=1))
 ```
 
 ```{r}
@@ -945,7 +1006,7 @@ proba_new_knn = proba_weird + as.numeric(as.character(knn_res))
 proba_knn = ifelse(proba_new_knn > 1, proba_new_knn-1, 1-proba_new_knn)
 
 
-results_all = data.frame("KNN_pred" = knn_res, "KNN_prob" = proba_knn, "logi_pred"=logi_pred_class, "logi_prob" = pred.logit.reg, "NB_pred" = nbayes.predict, "NB_prob" = nbayes_predict_proba, "CT_pred" = classificationtree_valid_predict,"CT_prob" = classificationtree_valid_proba, "bag_pred" = valid_predict_bag$class, "bag_prob" = valid_predict_bag_prob, "boost_pred" =valid_predict_boost$class, "boost_prob" = valid_predict_boost_proba, "rf_pred" = valid_predict_rf, "rf_prob" = valid_predict_rf_proba, "neural_net_pred"=nn_predict, "neural_net_prob" = nn_predict_proba)
+results_all = data.frame("KNN_pred" = knn_res, "KNN_prob" = proba_knn, "logi_pred"=logi_pred_class, "logi_prob" = pred.logit.reg, "NB_pred" = nbayes.predict, "NB_prob" = nbayes_predict_proba, "CT_pred" = classificationtree_test_predict,"CT_prob" = classificationtree_test_proba, "bag_pred" = test_predict_bag, "bag_prob" = test_predict_bag_prob, "boost_pred" =test_predict_boost, "boost_prob" = test_predict_boost_proba, "rf_pred" = test_predict_rf, "rf_prob" = test_predict_rf_proba, "neural_net_pred"=nn_predict, "neural_net_prob" = nn_predict_proba)
 head(results_all)
 ```
 
@@ -962,16 +1023,28 @@ results_all$ensemble_majority = ensemble_majority
 ### Average proba : 
 results_all$ensemble_proba = ifelse((results_all$KNN_prob +  results_all$logi_prob +  results_all$NB_prob +  results_all$CT_prob +  results_all$bag_prob +  results_all$boost_prob +  results_all$rf_prob +  results_all$neural_net_prob)/8 >= 0.5, 1,0)
 
-results_all$true = valid_scaled_back$Potability
+results_all$true = test_scaled_back$Potability
 ```
 
 
 ```{r}
-confusionMatrix(as.factor(results_all$ensemble_majority), valid_scaled_back$Potability,positive = "1")
-confusionMatrix(as.factor(results_all$ensemble_proba), valid_scaled_back$Potability,positive = "1")
+confu_majority = confusionMatrix(as.factor(results_all$ensemble_majority), test_scaled_back$Potability,positive = "1")
+confu_majority
+confu_avg_proba = confusionMatrix(as.factor(results_all$ensemble_proba), test_scaled_back$Potability,positive = "1")
+confu_avg_proba
 ```
 
-Ensemble average seems to perform better 0.6603 Accuracy. As we can see we have a hard time predicting the Potable water. It is probably because they both have the same distribution of each feature and that we have more non potable water in our data set. Also having some non potable water that has the same distribution as potable water make it hard for any of our model to find which class it belongs to. 
+```{r}
+acc_majority = confu_majority$overall["Accuracy"]
+acc_avg_proba = confu_avg_proba$overall["Accuracy"]
+
+ensemble_df = data.frame("Accuracy"=c(acc_majority,acc_avg_proba),"Ensemble"=c("Majority","Average Proba"))
+
+ggplot(ensemble_df, aes(x = Ensemble, y=Accuracy, fill = Ensemble)) + geom_bar(stat="identity") + geom_text(mapping= aes(x = Ensemble, y=Accuracy,label = round(Accuracy,4)), vjust=-0.5, size = 2, col = "red") + labs(title = "Accuracy of our Ensemble models on the Test set") + theme_bw()
+```
+
+
+Ensemble average seems to perform better 0.6733 Accuracy. As we can see we have a hard time predicting the Potable water. It is probably because they both have the same distribution of each feature and that we have more non potable water in our data set. Also having some non potable water that has the same distribution as potable water make it hard for any of our model to find which class it belongs to. 
 
 
 
