@@ -26,6 +26,7 @@ library(hrbrthemes) ### nice ggplot themes
 library(mice) ### missing valiues 
 library(pheatmap) ### Nice heatmaps
 library(fmsb) ### Radar chart
+library(ggpubr)
 ```
 
 ### Exploratory data analysis :
@@ -65,13 +66,13 @@ pie_chart = ggplot(amount, aes(x = "", y = Percentage, fill = Group)) +
 amount$total = c(sum(df$Potability == 1),sum(df$Potability == 0))
 
 bar_chart = ggplot(amount, aes(x = Group, y = total, fill = Group)) + geom_bar(stat = "identity") +
-  scale_fill_viridis_d() + labs(title = "Quantity of good and bad water in our data set", x = "Water Quality", y = "Total amount", fill = "Water Quality")
+  scale_fill_viridis_d() + labs(title = "Quantity of potable and non-potable water", x = "Water Quality", y = "Total amount", fill = "Water Quality")
 
 plot_grid(pie_chart, bar_chart, labels = "AUTO")
 
 ```
 
-We can see that we have more non-potable than potable water. In general, even if we have more non-potable water, our data set is pretty balanced. We have 1278 Potable and 1998 non-potable water. I think we can focus our analysis on accuracy and F1 score to be more robust.
+We can see that we have more non-potable than potable water. In general, even if we have more non-potable water, our data set is pretty balanced. We have 1278 potable and 1998 non-potable water observations. We think we can focus our analysis on accuracy and F1 score to be more robust.
 
 ### Distribution of all our variables by using some boxplots : 
 
@@ -88,7 +89,7 @@ for (i in seq(1:9)) {
 }
 ```
 
-The distribution of both groups of water seems pretty similar. But we can clearly see something weird going on. First I would think that there would be a difference between the 2 groups. Second, the who recommends that the desirable limit of 'Solids' is 500 mg/liter and maximum limit of 'Solids' is 1000mg/liter (WHO) but we can clearly see that we have potable water that are well above this recommendation.
+The distribution of both groups of water seems pretty similar. But we can clearly see that something weird is going on. First, we thought that there would be a difference between the 2 groups. Second, the WHO recommends that the desirable limit of 'Solids' is 500 mg/liter and maximum limit of 'Solids' is 1000 mg/liter (WHO). However, we can clearly see that we have potable water that are much above this recommendation.
 
 ### Distribution of all our variables by using some histograms : 
 
@@ -105,7 +106,7 @@ ggplot(df, aes(x=ph, fill=factor(Potability))) +
     labs(fill="Quality of the water", title= "Distribution of ph for potable and non-potable water", color = "Mean and median")
 ```
 
-The 'ph' variable seems pretty normally distributed. We can see that the 'ph' variable is close to symmetric (median=mean). The potable and non potable water seem to be normally distributed with pretty much the same value for ph which seems a little bit weird. The WHO recommends to get drink water with a pH from 6.5 to 8.5.  
+The 'ph' variable seems pretty normally distributed. We can see that the 'ph' variable is close to symmetric (median=mean). The potable and non-potable water seem to be normally distributed with pretty much the same values for 'ph'. It seems a little bit weird. The WHO recommends to drink water with a 'ph' from 6.5 to 8.5.  
 
 ```{r}
 ggplot(df, aes(x=Hardness, fill=factor(Potability))) +
@@ -120,7 +121,7 @@ ggplot(df, aes(x=Hardness, fill=factor(Potability))) +
 #mean(df$Hardness,na.rm = T)
 ```
 
-The 'Hardness' variable seems pretty normally distributed. We can see that the 'Hardness' variable is close to symmetric (median=mean).It seems more centered as well. The WHO does not recommend a limit of 'Hardness'. In drinking-water, hardness is in the range 10–500 mg of calcium carbonate per litre source : https://www.who.int/water_sanitation_health/dwq/hardness.pdf
+The 'Hardness' variable seems pretty normally distributed. We can see that the 'Hardness' variable is close to symmetric (median=mean). It seems more centered as well. The WHO does not recommend a limit of 'Hardness'. In drinking-water, 'Hardness' is in the range 10–500 mg of calcium carbonate per liter source : https://www.who.int/water_sanitation_health/dwq/hardness.pdf
 
 
 ```{r}
@@ -167,7 +168,7 @@ ggplot(df, aes(x=Sulfate, fill=factor(Potability))) +
 
 ```
 
-The 'Sulfate' variable seems pretty normally distributed. We can see that the 'Sulfate' variable is close to symmetric (median=mean).It seems more centered as well. The WHO recommend a level of 500 mg/l as a limit for sulfate.
+The 'Sulfate' variable seems pretty normally distributed. We can see that the 'Sulfate' variable is close to symmetric (median=mean). It seems more centered as well. The WHO recommend a level of 500 mg/l as a limit for sulfate.
 
 ```{r}
 ggplot(df, aes(x=Conductivity, fill=factor(Potability))) +
@@ -183,7 +184,7 @@ ggplot(df, aes(x=Conductivity, fill=factor(Potability))) +
 
 ```
 
-The 'Conductivity' variable seems pretty normally distributed. Even though the 'Conductivity' variable is slightly right-skewed (median<mean), we can see that it is close to symmetric (median=mean).The desirable limit of 'Conductivity' should not exceed 400 μS/cm (WHO). 
+The 'Conductivity' variable seems pretty normally distributed. Even though the 'Conductivity' variable is slightly right-skewed (median<mean), we can see that it is close to symmetric (median=mean). The desirable limit of 'Conductivity' should not exceed 400 μS/cm (WHO). 
 
 ```{r}
 ggplot(df, aes(x=Organic_carbon, fill=factor(Potability))) +
@@ -287,7 +288,7 @@ radarchart(rad_2  , axistype=1 ,
     #custom the grid
     cglcol="grey", cglty=1, axislabcol="grey", cglwd=0.8,
     #custom labels
-    vlcex=0.8 , title = "Not Potable Water"
+    vlcex=0.8 , title = "Non-potable Water"
     
     )
 ```
@@ -307,7 +308,7 @@ new_rad = data.frame(ph = c(max(df$ph, na.rm = T),0,mean(df_0$ph, na.rm=T),mean(
 
                    )
 
-row.names(new_rad)[3:4] = c("Not Potable", "Potable")
+row.names(new_rad)[3:4] = c("Non-potable", "Potable")
 
 
 # Color vector
@@ -339,7 +340,7 @@ In fact, we can see that there is no significant difference between potable and 
 pheatmap(cor(df, use = "complete"), display_numbers = T,cluster_rows = F, cluster_cols = F, fontsize_number = 15)
 ```
 
-They are not correlated at all between each other. It means that we will not have issues of multicolinearity.
+They are not correlated at all between each other. It means that we will not have any issues of multicollinearity.
 
 #### Missing values :
 
@@ -374,13 +375,15 @@ vis_miss(df)
 
 Looking at all the previous graphs, it seems that the missing observations do not really follow a pattern. It does not seem that the NAs are missing in a systematic way.
 
-#### Comparing different methods to find the best one to deal with the missing values. To know which method of imputation performs better, we will need to perform a cross validation using a decision tree as a baseline since it handles missing values. During the Cross-validation, we will impute the missing values based on the median, or knn of the train set on our validation set. For example, with a 5 fold cross validation, it means that 80 % of our training set will be 4 fold and 20% will represent 1 fold. During the Cross validation, the 4 folds will impute its missing values its median or knn than it will do the same of the other fold (the validation one that represents 20%) based on the training value since we want to avoid data leakage. We will choose the method of imputation that performs the best. Here we will use K-NN, median imputation and dropping values and compare it to not dropping values.
+#### Comparing different methods to find the best one to deal with the missing values.
+
+To know which method of imputation achieve the best results, we will need to perform a cross-validation using a decision tree. It will be our basis because it handles missing values. During the cross-validation, we will either impute the missing values based on the median or K-NN of the train set on our validation set. For example, with a 5 folds cross-validation, 80% of our training set will be 4 folds and 20% will be 1 fold. During the cross-validation process, the 4 folds will impute its missing values its median or K-NN than it will do the same of the other fold (the validation one that represents 20%) based on the training value since we want to avoid data leakage. We will choose the method of imputation that performs the best. Here we will use K-NN, median imputation and dropping values and compare it to not dropping values.
 
 Partitioning our data: We will use the stratified sampling method because we want to ensure that we have the same proportion of water quality in each of our samples. We will create a train set that represents 60% our of data and a test set that represents 40 % of our data.
 
 ```{r}
 set.seed(1)
-df$Potability = as.factor(df$Potability) ### changing our Potability variables into a factor since it's a category ! 
+df$Potability = as.factor(df$Potability) ### changing our 'Potability' variable into a factor since it's a category ! 
 train.index = createDataPartition(df$Potability, p = .6, list = FALSE)
 train.set = df[ train.index,] ### 60%
 test.set= df[-train.index,] ### 40% test
@@ -390,9 +393,9 @@ test.set= df[-train.index,] ### 40% test
 head(train.set)
 ```
 
-#### Cross validation with 5 folds for imputation 
+#### Cross-validation with 5 folds for imputation 
 
-Decision tree (without dropping any missing values because DT handle missing values).
+Decision tree (without dropping any missing values because Decision trees handle missing values).
 
 ```{r}
 set.seed(1) 
@@ -404,7 +407,7 @@ normal_cv_tree = train(Potability ~ ., #. is to tell that we use all our variabl
                method = "rpart",    ### we use classification tree
                na.action = na.pass,
                preProcess = c("center","scale"),
-               trControl = tr_control)   ### the cross validation on 10 folds  ### on 30 k
+               trControl = tr_control)   ### the cross-validation on 10 folds  ### on 30 k
                #,metric = "Kappa"# We can play with metrics to select one specific but here I want them all
                
 print(normal_cv_tree)
@@ -413,21 +416,21 @@ f11 = max(normal_cv_tree$results$F1)
 #results = data.frame("Accuracy" = accu1, )
 ```
 
-Without dropping values and by using a decision tree, the accuracy of our model using a 5 fold cross-validation is 0.6327.
+Without dropping values and by using a decision tree, the accuracy of our model using a 5 folds cross-validation is 0.6327534.
 
 Decision tree with median imputation.
 
 ```{r}
 set.seed(1) ### To have the same results  !!! 
 
-tr_control = trainControl(method = "cv",number = 5 ,summaryFunction =  multiClassSummary) ### use cross validation 10 times on 10 different fold and have a summary of all metrics and having a preprocess step of imputing the median to see if it works well
+tr_control = trainControl(method = "cv",number = 5 ,summaryFunction =  multiClassSummary) ### use cross-validation 10 times on 10 different fold and have a summary of all metrics and having a preprocess step of imputing the median to see if it works well
 
 median_cv_tree = train(Potability ~ ., #. is to tell that we use all our variables as predictors on personal loan
                data = train.set,    ## on our training data
                method = "rpart",    ### we use classification tree
                na.action = na.pass,
                trControl = tr_control,
-               preProcess = c("medianImpute","center","scale"))   ### the cross validation on 10 folds  ### on 30 k
+               preProcess = c("medianImpute","center","scale"))   ### the cross-validation on 10 folds  ### on 30 k
                #,metric = "Kappa"# We can play with metrics to select one specific but here I want them all
                
 print(median_cv_tree)
@@ -436,7 +439,7 @@ med_acc = max(median_cv_tree$results$Accuracy)
 med_f1 = max(median_cv_tree$results$F1)
 ```
 
-We have an accuracy of 0.63428
+We have an accuracy of 0.6342827.
 
 Decision tree with K-NN imputation. 
 
@@ -450,7 +453,7 @@ knnimpute_cv_tree = train(Potability ~ ., #. is to tell that we use all our vari
                method = "rpart",    ### we use classification tree
                na.action = na.pass,
                trControl = tr_control,
-               preProcess = c("knnImpute","center","scale"))   ### the cross validation on 10 folds  ### on 30 k
+               preProcess = c("knnImpute","center","scale"))   ### the cross-validation on 10 folds  ### on 30 k
                #,metric = "Kappa"# We can play with metrics to select one specific but here I want them all
                
 print(knnimpute_cv_tree)
@@ -459,7 +462,7 @@ knn_acc = max(knnimpute_cv_tree$results$Accuracy)
 knn_f1 = max(knnimpute_cv_tree$results$F1)
 ```
 
-With the KNN imputation we have an accuracy of 0.63834 using a decision tree.
+With the K-NN imputation, we have an accuracy of 0.6383462 using a decision tree.
 
 Decision tree (we drop all the missing values).
 
@@ -468,14 +471,14 @@ set.seed(1) ### To have the same results  !!!
 
 train.set2 = na.omit(train.set)
 
-tr_control = trainControl(method = "cv",number = 5 ,summaryFunction =  multiClassSummary) ### use cross validation 10 times on 10 different fold and have a summary of all metrics and having a preprocess step of imputing the median to see if it works well
+tr_control = trainControl(method = "cv",number = 5 ,summaryFunction =  multiClassSummary) ### use cross-validation 10 times on 10 different fold and have a summary of all metrics and having a preprocess step of imputing the median to see if it works well
 
 drop_cv_tree = train(Potability ~ ., #. is to tell that we use all our variables as predictors on personal loan
                data = train.set2,    ## on our training data
                method = "rpart",    ### we use classification tree
                na.action = na.pass,
                preProcess = c("center","scale"),
-               trControl = tr_control)   ### the cross validation on 10 folds  ### on 30 k
+               trControl = tr_control)   ### the cross-validation on 10 folds  ### on 30 k
                #,metric = "Kappa"# We can play with metrics to select one specific but here I want them all
                
 print(drop_cv_tree)
@@ -484,24 +487,24 @@ drop_acc = max(drop_cv_tree$results$Accuracy)
 drop_f1 = max(drop_cv_tree$results$F1)
 ```
 
-By dropping our missing values, the decision tree using 5 fold cross-validation gave us an accuracy of 0.6195
+By dropping our missing values, the decision tree using 5 folds cross-validation gave us an accuracy of 0.6195190.
 
-#### Comparaison of method of imputation using a 5 fold cross-validation in a decision tree.
+#### Comparison of the imputation methods using a 5 folds cross-validation in a decision tree.
 ```{r}
 results_cv_impute = data.frame("Accuracy" = c(accu1, med_acc, knn_acc, drop_acc), "F1 Score" = c(f11, med_f1, knn_f1, drop_f1),"Method" = c("No dropping","Median imputation","K-NN imputation","Dropping the NAs"))
 
-results_cv_impute %>% gather(Attributes, Values, 1:2) %>% ggplot(aes(x = Attributes, y = Values, fill = Method)) + scale_fill_viridis_d() + geom_bar(stat = "identity",position = "dodge") + geom_text(mapping= aes(x = Attributes, y=Values,label = round(Values,4)), vjust=-0.5, size = 2,position = position_dodge(width = .9), col = "red") + labs(title = "Comparison of the methods to deal with the NAs", x = "Metrics") + theme_light()
+results_cv_impute %>% gather(Attributes, Values, 1:2) %>% ggplot(aes(x = Attributes, y = Values, fill = Method)) + scale_fill_viridis_d() + geom_bar(stat = "identity",position = "dodge") + geom_text(mapping= aes(x = Attributes, y=Values,label = round(Values,4)), vjust=-0.5, size = 2,position = position_dodge(width = .9), col = "red") + labs(title = "Comparison of the imputation methods to deal with the NAs", x = "Metrics") + theme_light()
 ```
 
 It seems that the K-NN imputation is the best method because it has the highest accuracy and the second F1 score. The median imputation has very similar results (but slightly worse). When we do not drop any NAs, we obtain the highest F1 score but it is very close to the K-NN imputation method and median method. However, for the rest of our project, we need to either impute or drop the missing values to perform, for example, a K-NN model or a neural nets. Therefore, the model with the best results and meeting these criteria is the K-NN imputation.
 
 ### Preprocessing using K-NN on our train and valid set. We will do the range and z score method.
 
-we will use 2 different preprocessing methods. The first one using the range method and the second one using the center and scale method. 
+We will use 2 different preprocessing methods. First, we will use the range method and then the center and scale method. 
 
 ```{r}
 
-range_values = preProcess(train.set, method = c("knnImpute", "range")) ### range method that we will use for neural nets and knn mostly
+range_values = preProcess(train.set, method = c("knnImpute", "range")) ### range method that we will use for neural nets and K-NN mostly
 
 train.range = predict(range_values, train.set)
 test.range = predict(range_values, test.set)
@@ -518,7 +521,7 @@ test.norm = predict(norm_values, test.set)
 
 ```
 
-### Creating a function to scale back our train and test set from the normalisation of our data. We will need to to work with cross-validation and also to work with tree models and the logistic regression.
+### Creating a function to scale back our train and test set from the normalisation of our data.
 
 ```{r}
 scale_back_z_score <- function(z,var) {
@@ -543,27 +546,28 @@ for (i in colnames(test_scaled_back[-10])) {
 ```
 
 
-#### Differences of the distribution when we impute the missing values with and without K-NN:
-Here we are going to compare how the K-NN imputation method on the ph, Sulfate and Trihalomethanes variables changed their distribution.
+#### Differences of the distribution when we impute the missing values (with and without K-NN).
+
+Here, we are going to compare how the K-NN imputation method on the 'ph', 'Sulfate' and 'Trihalomethanes' variables changed their respective distribution.
 ```{r}
 library(reshape2)
 ph_group = cbind(train.set$ph, train_scaled_back$ph)
 ph_group = as.data.frame(ph_group)
 colnames(ph_group) = c("ph no imputation", "ph knn imputation")
 ph_group = melt(ph_group)
-diff_ph = ggplot(ph_group, aes(x=value, group = variable, fill = variable)) + geom_density(alpha = 0.5)+labs(title = "Distribution of PH with and without knn imputation") + scale_fill_manual(values = c("red","blue"))
+diff_ph = ggplot(ph_group, aes(x=value, group = variable, fill = variable)) + geom_density(alpha = 0.5)+labs(title = "Distribution of ph with and without K-NN imputation") + scale_fill_manual(values = c("red","blue"))
 
 sulfate_group = cbind(train.set$Sulfate, train_scaled_back$Sulfate)
 sulfate_group = as.data.frame(sulfate_group)
 colnames(sulfate_group) = c("sulfate no imputation", "sulfate knn imputation")
 sulfate_group = melt(sulfate_group)
-diff_sulfate = ggplot(sulfate_group, aes(x=value, group = variable, fill = variable)) + geom_density(alpha = 0.5)+labs(title = "Distribution of sulfate with and without knn imputation") + scale_fill_manual(values = c("red","blue"))
+diff_sulfate = ggplot(sulfate_group, aes(x=value, group = variable, fill = variable)) + geom_density(alpha = 0.5)+labs(title = "Distribution of Sulfate with and without K-NN imputation") + scale_fill_manual(values = c("red","blue"))
 
 trihalomethanes_group = cbind(train.set$Trihalomethanes, train_scaled_back$Trihalomethanes)
 trihalomethanes_group = as.data.frame(trihalomethanes_group)
 colnames(trihalomethanes_group) = c("trihalomethanes no imputation", "trihalomethanes knn imputation")
 trihalomethanes_group = melt(trihalomethanes_group)
-diff_triha = ggplot(trihalomethanes_group, aes(x=value, group = variable, fill = variable)) + geom_density(alpha = 0.5)+labs(title = "Distribution of trihalomethanes with and without knn imputation") + scale_fill_manual(values = c("red","blue"))
+diff_triha = ggplot(trihalomethanes_group, aes(x=value, group = variable, fill = variable)) + geom_density(alpha = 0.5)+labs(title = "Distribution of Trihalomethanes with and without K-NN imputation") + scale_fill_manual(values = c("red","blue"))
 ```
 
 ```{r}
@@ -572,7 +576,7 @@ plot_grid(diff_ph, diff_sulfate, diff_triha)
 
 The distribution does not really change except for 'Sulfate' variable where we had 25% of missing values. In general, our distribution becomes a bit more centered but the impact does not seem that important. It respected the distribution of our variables.
 
-#### 3D graph using ph, organic carbon and Turbidity to see how our potable and non potable water are dispersed.
+#### 3D graph using 'ph', 'Organic_carbon' and 'Turbidity' to see how our potable and non-potable water observations are dispersed.
 
 It represents our water quality based on 'ph', 'Organic_carbon' and 'Turbidity'.
 ```{r}
@@ -584,16 +588,15 @@ fig <- fig %>% layout(scene = list(xaxis = list(title = 'ph'),
 fig
 ```
 
-We can see that they are all stacked together. It doesn't seem like there's a seperation of the 2 groups. So, it will be hard to classify them correctly using a model. But looking at this graph we can clearly see that our data isn't the best.
+We can see that they are all stacked together. It does nott seem like there is a separation between both groups. Therefore, it will be hard to classify them correctly using a model. But looking at this graph, we can clearly see that our data are not optimal.
 
 #### Implemetation of our models : 
 
-We are going to have as a benchmark the naive rule since it's going to be hard to classify our observations properly. The naive rule is when a model classify all our observation into the most prevalent class. Here, since we have 60.99 % of our observations that are non potable water. The lowest accuracy possible for a model would be to classify every observation into non potable water and get an accuracy of 0.6099. We should be aware of that and at least try to do better then this naive rule.
+Since it is difficult to classify properly our observations, we are going to use the naive rule as our benchmark. The naive rule classifies all our observations into the most prevalent class. Here, 60.99% of our observations are non-potable water. The lowest possible accuracy for a model would be to classify every observation into non-potable water and get an accuracy of 0.6099. We need to try to do better than this naive rule.
 
-
-##### Let's start with KNN : 
-For KNN, it is better to have our train and test set that have value ranged from 0 - 1. So, we will use the train range and valid range sets.
-First we need to find the best K for our model so let's do a cross-validation with a preprocessing using the range method to make our estimation more robust : 
+##### Let's start with K-NN : 
+With K-NN method, we need to have our values from our train and test set between 0 and 1. Therefore, we will use the train range and valid range sets.
+We first need to find the best K for our model. Thus, we will perform a cross-validation with a preprocessing using the range method to make our estimation more robust : 
 ```{r}
 set.seed(1) 
 
@@ -601,7 +604,7 @@ tr_control = trainControl(method = "cv",number = 5 ,summaryFunction =  multiClas
 
 knn_cross_val = train(Potability ~ ., # Predicted class
                data = train_scaled_back,    # on our training data
-               method = "knn",    # we use knn
+               method = "knn",    # we use K-NN
                trControl = tr_control,
                preProcess="range", # preProcess our data with the range method for every fold
                tuneGrid = data.frame(k = seq(50)))
@@ -612,7 +615,7 @@ knn_cv_acc
 knn_cross_val$resample$Accuracy
 ```
 
-The best k that maximizes our accuracy is k = 18 and the results of the average accuracy of our cross-validation using k = 18 is 0.631. Now that we know the best tune for our model let's use it for our test set.
+The best K that maximizes our accuracy is K = 18. The results of the average accuracy from our cross-validation using K = 18 is 0.6317459. We could replace this value (K=18) into our test set.
 
 ```{r}
 set.seed(1)
@@ -623,7 +626,11 @@ confusion_knn
 accuracy_knn = confusion_knn$overall["Accuracy"]
 ```
 
-as we can see with knn we predicted poorly our class 0.6305 of accuracy is really not that good. We predicted our class 0 (not potable water) better than potable water. Why ? Well it's probably because we have more non potable water in our data set and having a large k make our prediction based on the more prevalent class which is non potable water.
+<<<<<<< Updated upstream
+With K-NN, we can see that we predicted poorly our class. Indeed, 0.6305 of accuracy is really not that good. We predicted our class 0 (non-potable water) better than our class 1 (potable water). Why ? It could be because we have more non-potable water observations in our data set. Moreover, since we have a large k, our prediction is based on the more prevalent class which is non-potable water.
+=======
+as we can see with knn we predicted poorly our class. 61.76 % of accuracy is really not good. We predicted our class 0 (not potable water) better than potable water. Why ? Well it's probably because we have more non potable water in our data set and having a large k make our prediction based on the more prevalent class which is non potable water.
+>>>>>>> Stashed changes
 
 ```{r}
 colours = c("#599ad3", "#f9a65a")
@@ -631,11 +638,10 @@ res_knn = data.frame("Accuracy" = c(knn_cv_acc, accuracy_knn), "Sets"=c("avg cro
 ggplot(res_knn, aes(x=Sets, y=Accuracy, fill = Sets)) + geom_bar(stat = "identity") + labs(title = "Accuracy CV using training set VS test set") + scale_fill_manual(values = colours) + geom_text(mapping= aes(x = Sets, y=Accuracy,label = round(Accuracy,4)), vjust=-0.5, size = 2, col = "red")
 ```
 
-As we can see, the accuracy of the average 5 fold cross-validation performed on our training set is very close to the one of our test set. So, I don't think we are overfitting since the accuracy is quite similar for the 2 cases.
+As we can see, the accuracy of the average 5 folds cross-validation performed on our training set is very close to our test set. Therefore, we do not think that we are overfitting since the accuracy is quite similar for both situations.
 
-### Now let's perform a decision tree : 
-for a tree we don't need to work with scaled variables so let's scale back a train and test set:
-Scaling back our train and validations sets : 
+### Decision tree : 
+We do not need to work with scaled variables with a decision tree. We could scale back our train and test set.
 
 Building a full grown tree : 
 ```{r}
@@ -643,7 +649,7 @@ set.seed(1)
 train_tree = rpart(Potability ~ . , data=train_scaled_back, method = "class", control=rpart.control(maxdepth=30,cp=0, minsplit = 1,minbucket = 1, xval = 5)) 
 ```
 
-Pruning our full grown tree using 5 fold cross-validation : 
+Pruning our full grown tree using 5 folds cross-validation : 
 ```{r}
 library(rattle)
 prune_cp.index = which.min(train_tree$cptable[,"xerror"])
@@ -654,7 +660,7 @@ pruned_train_tree <- prune(train_tree, cp = prune_cp)
 fancyRpartPlot(pruned_train_tree)
 ```
 
-Looking at the tree, it seems that sulfate is the most important variable followed by harness and Trihalomethanes since they are the first one to start the split of our data.
+Looking at the tree, it seems that the 'Sulfate' parameter is the most important variable followed by 'Hardness' and 'Trihalomethanes' because they are the first ones to start the split of our data.
 
 ```{r}
 ### CV train accuracy : 
@@ -671,7 +677,7 @@ accuracy_tree = confusion_tree$overall["Accuracy"]
 train_tree_acc = confusionMatrix(classificationtree_train_predict, train_scaled_back$Potability, positive = "1")$overall["Accuracy"]
 ```
 
-We can see that with a tree we have an accuracy of 63.44% which is better than with knn ! The balanced accuracy is at 56.9 % meaning that we are doing a little bit better than by guessing randomly. It is clear and normal that we get those kind of results since it seems that the data set was weird. Indeed we had same values for all the variables even if they were potable or non potable water
+With a decision tree, we obtain an accuracy of 0.6344, which is better than with K-NN ! The balanced accuracy is 0.5690. It means that we have a little bit better than guessing at random. It is seems reasonable to obtain those kind of results since our data set was probably generated by a software. 
 
 ```{r}
 colours = c("#599ad3", "#f9a65a")
@@ -680,7 +686,8 @@ ggplot(tree_res, aes(x=Sets, y=Accuracy, fill = Sets)) + geom_bar(stat = "identi
 ```
 
 
-### Naive bayes : don't need scaling
+### Naive bayes.
+With Naive bayes, we do not need to scale.
 ```{r}
 library(e1071)
 nbayes.model = naiveBayes(Potability ~ ., data = train_scaled_back)
@@ -693,7 +700,7 @@ accuracy_nb
 confusionMatrix(predict(nbayes.model, train_scaled_back), train_scaled_back$Potability, positive = "1")
 ```
 
-Accuracy : 0.6237, Balanced Accuracy : 0.555 but we still struggle to predict well.
+We obtain an accuracy of 0.6237 and a balanced accuracy 0.555. We still struggle to predict well.
 
 ```{r, echo=FALSE,warning=FALSE,message=FALSE,error=FALSE, results='hide',fig.keep='all'}
 set.seed(1) 
@@ -702,7 +709,7 @@ tr_control = trainControl(method = "cv",number = 5) # 5 fold CV
 
 nb_cv = train(Potability ~ ., # Predicted class
                data = train_scaled_back,    # on our training data
-               method = "nb",    # we use knn
+               method = "nb",    # we use K-NN
                trControl = tr_control,
               )
                
@@ -720,7 +727,7 @@ nb_res = data.frame("Accuracy" = c(nb_cv_acc, accuracy_nb), "Sets"=c("Avg 5 fold
 ggplot(nb_res, aes(x=Sets, y=Accuracy, fill = Sets)) + geom_bar(stat = "identity") + labs(title = "Accuracy CV using training set VS test set") + scale_fill_manual(values = colours) + geom_text(mapping= aes(x = Sets, y=Accuracy,label = round(Accuracy,4)), vjust=-0.5, size = 2, col = "red")
 ```
 
-Here using NB cross-validation or just using simply naive bayes gives us the same results on our test set.
+We get the same results on our test set whether we use Naives bayes cross-validation or simply Naives bayes.
 
 
 ### Boosting : 
@@ -740,10 +747,10 @@ boosted_cv = train(Potability ~ ., #. is to tell that we use all our variables a
 print(boosted_cv)
 ```
 
-Accuracy was used to select the optimal model using the largest value. CV Accuracy = 0.6337712
-The final values used for the model were nIter = 150 (150 trees) and method = Adaboost.M1.
+The largest value of accuracy (0.6337712) was used to select the optimal model.
+The final values and method used for the model were respectively nIter (150 trees) and Adaboost.M1.
 
-Let's use our cv model to predict our test data.
+We will now use our cross-validation model to predict our test data.
 ```{r}
 set.seed(1)
 cv_boost_acc = 0.6337712
@@ -756,21 +763,21 @@ accuracy_boost = confusion_boost$overall["Accuracy"]
 
 ```
 
+We obtain an accuracy of 0.6427 and a balanced accuracy of 0.6063. It is better than the other methods so far. 
 
 ```{r}
 plot(varImp(boosted_cv), main="Variable Importance with boosting")
 ```
 
-Sulfate, ph and Harness are the 3 most important variables in this model.
+We can see that 'Sulfate', 'ph' and 'Hardness' are the 3 most important variables within this model.
 
-Accuracy : 0.642,Balanced Accuracy : 0.6025    Already better. 
 ```{r}
 colours = c("#599ad3", "#f9a65a")
 boost_res = data.frame("Accuracy" = c(cv_boost_acc, accuracy_boost), "Sets"=c("Avg 5 fold CV train","test"))
 ggplot(boost_res, aes(x=Sets, y=Accuracy, fill = Sets)) + geom_bar(stat = "identity") + labs(title = "Accuracy CV using training set VS test set") + scale_fill_manual(values = colours) + geom_text(mapping= aes(x = Sets, y=Accuracy,label = round(Accuracy,4)), vjust=-0.5, size = 2, col = "red")
 ```
 
-### bagging
+### Bagging
 
 ```{r}
 set.seed(1)
@@ -789,10 +796,10 @@ plot(varImp(bagged_cv), main="Variable Importance with Bagging")
 
 
 
-Unfortunately there's no tuning parameter for this method. (But Bagged AdaBoost has ! )
-Accuracy of the 5 fold cv = 0.6541236 using 200 trees
+Unfortunately, we cannot use any tuning parameters for this method (but Bagged AdaBoost has !).
+The accuracy of the 5 folds cross-validation is equal to 0.6541236 (using 200 trees). 
 
-Now let's look on our test data.
+We could verify on our test data.
 ```{r}
 set.seed(1)
 
@@ -811,11 +818,11 @@ bag_res = data.frame("Accuracy" = c(cv_bagged_acc, accuracy_bag), "Sets"=c("Avg 
 ggplot(bag_res, aes(x=Sets, y=Accuracy, fill = Sets)) + geom_bar(stat = "identity") + labs(title = "Accuracy CV using training set VS test set") + scale_fill_manual(values = colours) + geom_text(mapping= aes(x = Sets, y=Accuracy,label = round(Accuracy,4)), vjust=-0.5, size = 2, col = "red")
 ```
 
-Accuracy : 0.6687 Balanced Accuracy : 0.6187
+We obtain an accuracy of 0.6687 and a balanced accuracy of 0.6187. It is improving.
 
 #### Random Forest
-CV
 
+We will again use the cross-validation method to determine the best parameter (mtry) to use.
 ```{r}
 library(randomForest)
 set.seed(1)
@@ -836,7 +843,7 @@ print(rf_gridsearch)
 
 ```
 
-When using cross validation on random forest using the scaled back data, the best mtry to use is 6. We get a 0.6597 accuracy.
+When we perform a cross-validation on random forest using the scaled back data, we obtain that the best mtry to use is 6. We find an accuracy equal to 0.6597099.
 
 ```{r}
 library(randomForest)
@@ -854,10 +861,9 @@ accuracy_rf = confusion_rf$overall["Accuracy"]
 varImpPlot(randomf)
 ```
 
-Accuracy : 0.674
-Balanced Accuracy : 0.6228  
+With the random forest method, we end up with an accuracy of 0.674 and a balanced accuracy of 0.6228. It corresponds to the best coefficients of accuracy that we had so far!
 
-the 3 most important variables are ph, Sulfate and Hardness.
+We can note that the 3 most important variables are 'ph', 'Sulfate' and 'Hardness' as previously found.
 
 ```{r}
 colours = c("#599ad3", "#f9a65a")
@@ -885,8 +891,7 @@ confusionMatrix(logi_cv)
 
 ```
 
-No variables are significant.
-0.6093608 accuracy. Here are model classify almost all our classes as 0 since it's the predominant class to maximize its accuracy. Unfortunately, this doesn't give us any information ! Here, it does even worse then then naive rule. Naive rule acc = 0.6099 VS 0.6094. This model classified 0.1% of our data into 1 while it was 0.
+When we perform our logistic regression, we can see that no variables are significant (p-value > 0.05). We obtain an accuracy of 0.6108859. Here our model classifies almost all our classes as 0 since it's the predominant class. Unfortunately, it does not give us any useful information ! It is almost worse then then naive rule (0.6099 VS 0.6108859). This model classified 0.1% of our data into 1 while it was 0.
 
 ```{r}
 logi_cv_acc = logi_cv$results$Accuracy
@@ -897,10 +902,10 @@ confusion_logi
 accuracy_logi = confusion_logi$overall["Accuracy"]
 ```
 
-as you can see its does the same for our test data. this is a pure example of the naive rule where the model classify every observations into the most prevalent class.
+We find similar results for our test data. It is a typical illustration of the naive rule issue, where the model classifies every observation into the most prevalent class.
 
 
-Let's visualize our results :
+We can visualize the results.
 
 ```{r}
 #library(devtools)
@@ -942,7 +947,7 @@ ggthemr("flat")
 cm_info$plot
 ```
 
-We can clearly see that it's not very good. We are doing as good as the baseline (the naive rule). This model give us no real information ! 
+It is clearly not very good. We are doing as good as the baseline (the naive rule). This model returns no useful information ! 
 
 ```{r}
 colours = c("#599ad3", "#f9a65a")
@@ -950,7 +955,9 @@ logi_res = data.frame("Accuracy" = c(logi_cv_acc, accuracy_logi), "Sets"=c("Avg 
 ggplot(logi_res, aes(x=Sets, y=Accuracy, fill = Sets)) + geom_bar(stat = "identity") + labs(title = "Accuracy CV using training set VS test set") + scale_fill_manual(values = colours) + geom_text(mapping= aes(x = Sets, y=Accuracy,label = round(Accuracy,4)), vjust=-0.5, size = 2, col = "red")
 ```
 
-#### Neural nets : Here we need to use the train set and validation set that has been preprocessed using the range method. Also, since our variable were symmetrical we don't need to use the log transformation.
+#### Neural nets.
+
+We need to use the train and validation sets that have been preprocessed by the range method. Since our variables were symmetrical, we do not need to use a log transformation.
 
 ```{r}
 set.seed(1)
@@ -966,7 +973,7 @@ nn_cv_acc = max(neural.net_cv$results$Accuracy)
 confusionMatrix(neural.net_cv)
 ```
 
-Using Cross-validation, we should use 5 nodes in 1 hidden layer and decay = 0.1 is the regularization parameter to avoid over-fitting
+As we can see with the cross-validation, we should use 5 nodes, 1 hidden layer and the decay equal to 0.1. The decay is the regularization parameter that avoids overfitting.
 
 ```{r}
 nn_predict = predict(neural.net_cv$finalModel, test.range, type = "class")
@@ -978,9 +985,7 @@ accuracy_nn = confusionMatrix(as.factor(nn_predict), test.range$Potability, posi
 #confusionMatrix(train_predict_nn, train.range$Potability, positive = "1")
 ```
 
-
-
-Accuracy : 0.6855 which is the best we have seen so far ! 
+We find an accuracy equal to 0.6855. It is the best coefficient that we have seen so far ! 
 
 ```{r}
 colours = c("#599ad3", "#f9a65a")
@@ -989,7 +994,7 @@ ggplot(nn_res, aes(x=Sets, y=Accuracy, fill = Sets)) + geom_bar(stat = "identity
 ```
 
 
-#### Creating a data frame storing all our result from the test set.
+#### Creating a data frame where we store all the results from the test set.
 
 ```{r}
 accuracy_all = data.frame("Model" = 
@@ -1010,9 +1015,10 @@ results_all = data.frame("KNN_pred" = knn_res, "KNN_prob" = proba_knn, "logi_pre
 head(results_all)
 ```
 
-Ensemble method : 
+#### Ensemble method.
+
 ```{r}
-### Average prediction : WE have 8 models : knn, logi, naive bayes, CT, bag, boost, rf, neural net
+### Average prediction : WE have 8 models : K-NN, logi, naive bayes, CT, bag, boost, rf, neural net
 ensemble_pred = as.numeric(as.character(results_all$KNN_pred)) + as.numeric(as.character(results_all$logi_pred)) + as.numeric(as.character(results_all$NB_pred)) + as.numeric(as.character(results_all$CT_pred)) +
   as.numeric(as.character(results_all$bag_pred)) + as.numeric(as.character(results_all$boost_pred)) + as.numeric(as.character(results_all$rf_pred)) + as.numeric(as.character(results_all$neural_net_pred))
 
@@ -1044,7 +1050,7 @@ ggplot(ensemble_df, aes(x = Ensemble, y=Accuracy, fill = Ensemble)) + geom_bar(s
 ```
 
 
-Ensemble average seems to perform better 0.6733 Accuracy. As we can see we have a hard time predicting the Potable water. It is probably because they both have the same distribution of each feature and that we have more non potable water in our data set. Also having some non potable water that has the same distribution as potable water make it hard for any of our model to find which class it belongs to. 
+The ensemble average seems to perform better with an accuracy of 0.6733. As we previously saw, it was tough to predict the potability of the water. It is likely due to the fact that our both groups have the same distribution for each feature and that we have more non-potable water observations in our data set. Having some non-potable water observations that have the same distribution as the potable water observation make it hard for all of our models to find in which class it should classify them.
 
 
 
