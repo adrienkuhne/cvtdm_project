@@ -74,7 +74,7 @@ plot_grid(pie_chart, bar_chart, labels = "AUTO")
 
 We can see that we have more non-potable than potable water. In general, even if we have more non-potable water, our data set is pretty balanced. We have 1278 potable and 1998 non-potable water observations. We think we can focus our analysis on accuracy and balanced accuracy to be more robust but we are also going to have a look at the F1 score.
 
-```{r, fig.height=9, fig.width=9}
+```{r, fig.height=5, fig.width=9}
 par(mfrow=c(3,3))
 for (i in seq(1:9)) {
   avg = mean(df[, i],na.rm = TRUE)
@@ -88,10 +88,21 @@ for (i in seq(1:9)) {
 ```
 
 All our variables seem symmetrical. The variable Solids is maybe a little bit right skewed but not by much. They look like they are all normally distributed.
+```{r}
+par(mfrow=c(3,3))
+for (i in seq(1:9)) {
+  qqnorm(df[,i], pch = 1, frame = FALSE, main = colnames(df[i]))
+  qqline(df[,i], col = "steelblue", lwd = 2)
+  
+}
+
+```
+
+Using the QQplot for all our variables we can clearly see that they follow the line, so they are normally distributed.
 
 ### Distribution of all our variables by using some boxplots : 
 
-```{r, fig.height=9, fig.width=9}
+```{r, fig.height=5.5, fig.width=9}
 par(mfrow=c(3,3))
 for (i in seq(1:9)) {
   avg_0 = mean(df[df$Potability == 0, i],na.rm = TRUE)
@@ -99,7 +110,7 @@ for (i in seq(1:9)) {
   means = c(avg_0, avg_1)
   boxplot(df[,i]~df$Potability, main = paste(colnames(df[i])), xlab = "Water Quality", ylab = colnames(df[i]), col = c("#69b3a2", "#404080"))
   points(1:2,means, col = "red", pch = 19)
-  legend("topright",legend="Means", col = "red", pch =19)
+  legend("topright",legend="Mean", col = "red", pch =19)
   
 }
 ```
@@ -118,7 +129,9 @@ ggplot(df, aes(x=ph, fill=factor(Potability))) +
     geom_vline(aes(xintercept =8.5, color="WHO recommendation")) +
     scale_color_manual(values = c("red","blue", "black"))  +
     theme_ipsum() +
-    labs(fill="Quality of the water", title= "Distribution of ph for potable and non-potable water", color = "Mean and median")
+    labs(fill="Quality of the water", title= "Distribution of ph for potable and non-potable water", color = "Mean and median")+
+  annotate("rect", xmin = 6.5, xmax = 8.5, ymin = 0, ymax = 210,
+           alpha = .2,fill = "blue")
 ```
 
 The 'ph' variable seems pretty normally distributed. We can see that the 'ph' variable is close to symmetric (median=mean). The potable and non-potable water seem to be normally distributed with pretty much the same values for 'ph'. It seems a little bit weird. The WHO recommends to drink water with a 'ph' from 6.5 to 8.5.  
@@ -130,8 +143,8 @@ ggplot(df, aes(x=Hardness, fill=factor(Potability))) +
     geom_vline(aes(xintercept = median(df$Hardness, na.rm=T), color="median")) +
     geom_vline(aes(xintercept = mean(df$Hardness,na.rm = T), color ="mean")) +
     scale_color_manual(values = c("red","blue"))  +
-    theme_ipsum() +
-    labs(fill="Quality of the water", title= "Distribution of Hardness for potable and non-potable water", color = "Mean and median")
+    theme_ipsum() + 
+    labs(fill="Quality of the water", title= "Distribution of Hardness for potable and non-potable water", color = "Mean and median", x = "Hardness mg/liter")
 #median(df$Hardness, na.rm=T)
 #mean(df$Hardness,na.rm = T)
 ```
@@ -149,7 +162,9 @@ ggplot(df, aes(x=Solids, fill=factor(Potability))) +
     geom_vline(aes(xintercept = 1000, color ="WHO recommendation")) +
     scale_color_manual(values = c("red","blue", "black"))  +
     theme_ipsum() +
-    labs(fill="Quality of the water", title= "Distribution of Solids for potable and non-potable water", color = "Mean and median")
+    labs(fill="Quality of the water", title= "Distribution of Solids for potable and non-potable water", color = "Mean and median", x = "Solids mg/liter")+
+  annotate("rect", xmin = 500, xmax = 1000, ymin = 0, ymax = 210,
+           alpha = .2,fill = "blue")
 
 ```
 
@@ -165,7 +180,9 @@ ggplot(df, aes(x=Chloramines, fill=factor(Potability))) +
     geom_vline(aes(xintercept = 4, color ="WHO recommendation")) +
     scale_color_manual(values = c("red","blue","black"))  +
     theme_ipsum() +
-    labs(fill="Quality of the water", title= "Distribution of Chloramines for potable and non-potable water", color = "Mean and median")
+    labs(fill="Quality of the water", title= "Distribution of Chloramines for potable and non-potable water", color = "Mean and median", x = "Chloramines mg/liter")+
+  annotate("rect", xmin = 0, xmax = 4, ymin = 0, ymax = 250,
+           alpha = .2,fill = "blue")
 
 ```
 
@@ -179,7 +196,7 @@ ggplot(df, aes(x=Sulfate, fill=factor(Potability))) +
     geom_vline(aes(xintercept = mean(df$Sulfate,na.rm = T), color ="mean")) +
     scale_color_manual(values = c("red","blue"))  +
     theme_ipsum() +
-    labs(fill="Quality of the water", title= "Distribution of Sulfate for potable and non-potable water", color = "Mean and median")
+    labs(fill="Quality of the water", title= "Distribution of Sulfate for potable and non-potable water", color = "Mean and median", x = "Sulfate mg/liter")
 
 ```
 
@@ -195,7 +212,9 @@ ggplot(df, aes(x=Conductivity, fill=factor(Potability))) +
     geom_vline(aes(xintercept = 400, color ="WHO recommendation")) +
     scale_color_manual(values = c("red","blue", "black"))  +
     theme_ipsum() +
-    labs(fill="Quality of the water", title= "Distribution of Conductivity for potable and non-potable water", color = "Mean and median")
+    labs(fill="Quality of the water", title= "Distribution of Conductivity for potable and non-potable water", color = "Mean and median", x = "Conductivity μS/cm")+
+  annotate("rect", xmin = 0, xmax = 400, ymin = 0, ymax = 240,
+           alpha = .2,fill = "blue")
 
 ```
 
@@ -210,7 +229,9 @@ ggplot(df, aes(x=Organic_carbon, fill=factor(Potability))) +
   geom_vline(aes(xintercept = 2, color ="Recommendation")) +
     scale_color_manual(values = c("red","blue", "black"))  +
     theme_ipsum() +
-    labs(fill="Quality of the water", title= "Distribution of Organic carbon for potable and non-potable water", color = "Mean and median")
+    labs(fill="Quality of the water", title= "Distribution of Organic carbon for potable and non-potable water", color = "Mean and median", x = "Organic Carbon mg/liter")+
+  annotate("rect", xmin = 0, xmax = 2, ymin = 0, ymax = 230,
+           alpha = .2,fill = "blue")
 
 ```
 
@@ -226,7 +247,9 @@ ggplot(df, aes(x=Trihalomethanes, fill=factor(Potability))) +
     geom_vline(aes(xintercept = 80, color ="WHO recommendation")) +
     scale_color_manual(values = c("red","blue","black"))  +
     theme_ipsum() +
-    labs(fill="Quality of the water", title= "Distribution of Trihalomethanes for potable and non-potable water", color = "Mean and median")
+    labs(fill="Quality of the water", title= "Distribution of Trihalomethanes for potable and non-potable water", color = "Mean and median", x = "Trihalomethanes in ppm")+
+  annotate("rect", xmin = 0, xmax = 80, ymin = 0, ymax = 210,
+           alpha = .2,fill = "blue")
 
 ```
 
@@ -242,7 +265,9 @@ ggplot(df, aes(x=Turbidity, fill=factor(Potability))) +
     geom_vline(aes(xintercept = 5, color ="WHO recommendation")) +
     scale_color_manual(values = c("red","blue","black"))  +
     theme_ipsum() +
-    labs(fill="Quality of the water", title= "Distribution of Turbidity for potable and non-potable water", color = "Mean and median")
+    labs(fill="Quality of the water", title= "Distribution of Turbidity for potable and non-potable water", color = "Mean and median", x = "Turbidity in NTU")+
+  annotate("rect", xmin = 0, xmax = 5, ymin = 0, ymax = 240,
+           alpha = .2,fill = "blue")
 
 ```
 
@@ -250,7 +275,7 @@ The 'Turbidity' variable seems pretty normally distributed. We can see that the 
 
 ### Difference between our potable and non-potable water by using a radar chart.
 
-```{r, fig.width=8, fig.height=8}
+```{r, fig.width=9, fig.height=4}
 
 par(mfrow=c(1,2))
 
@@ -337,7 +362,7 @@ radarchart( new_rad  , axistype=1 ,
     #custom the grid
     cglcol="grey", cglty=1, axislabcol="grey", cglwd=0.8,
     #custom labels
-    vlcex=0.8 
+    vlcex=0.8 , title = "Radar Chart of Water Quality"
     )
 
 # Add a legend
@@ -352,7 +377,8 @@ In fact, we can see that there is no significant difference between potable and 
 ### Correlation of our variables : 
 
 ```{r}
-pheatmap(cor(df, use = "complete"), display_numbers = T,cluster_rows = F, cluster_cols = F, fontsize_number = 15)
+#df$Potability =as.numeric(as.character(df$Potability))
+pheatmap(cor(df, use = "complete"), display_numbers = T,cluster_rows = F, cluster_cols = F, fontsize_number = 15, main = "Correlation matrix")
 ```
 
 They are not correlated at all between each other. It means that we will not have any issues of multicollinearity.
@@ -513,7 +539,7 @@ By dropping our missing values, the decision tree using 5 folds cross-validation
 ```{r}
 results_cv_impute = data.frame("Accuracy" = c(accu1, med_acc, knn_acc, drop_acc), "F1 Score" = c(f11, med_f1, knn_f1, drop_f1),"Balanced_Accuracy"=c(ba1, med_ba, knn_ba, drop_ba) ,"Method" = c("No dropping","Median imputation","K-NN imputation","Dropping the NAs"))
 
-results_cv_impute %>% gather(Attributes, Values, 1:3) %>% ggplot(aes(x = Attributes, y = Values, fill = Method)) + scale_fill_viridis_d() + geom_bar(stat = "identity",position = "dodge") + geom_text(mapping= aes(x = Attributes, y=Values,label = round(Values,4)), vjust=-0.5, size = 2,position = position_dodge(width = .9), col = "red") + labs(title = "Comparison of the imputation methods to deal with the NAs", x = "Metrics") + theme_light()
+results_cv_impute %>% gather(Attributes, Values, 1:3) %>% ggplot(aes(x = reorder(Attributes,-Values), y = Values, fill = Method,group = Values)) + scale_fill_viridis_d() + geom_bar(stat = "identity",position = "dodge", color = "white") + geom_text(mapping= aes(x = Attributes, y=Values,label = round(Values,4)), vjust=-0.5, size = 2,position = position_dodge(width = .9), col = "red") + labs(title = "Comparison of the imputation methods to deal with the NAs", x = "Metrics") + theme_light()
 ```
 
 These results are the best we can do for the accuracy, balanced accuracy and for the F1 score for each models. We then took the maximum of each of each imputation method to compare.
@@ -644,7 +670,7 @@ knn_cross_val = train(Potability ~ ., # Predicted class
                tuneGrid = data.frame(k = seq(50)))
 
 print(knn_cross_val)
-knn_cv_res = knn_cross_val$results[max(knn_cross_val$results$Accuracy) == knn_cross_val$results$Accuracy, c("k","Accuracy","F1","Balanced_Accuracy")]
+knn_cv_res = knn_cross_val$results[max(knn_cross_val$results$Accuracy) == knn_cross_val$results$Accuracy, c("k","Accuracy","F1","Balanced_Accuracy")] ### same K that maximizes both accuracy and balanced accuracy
 knn_cv_acc = knn_cv_res$Accuracy
 knn_cv_f1 = knn_cv_res$F1
 knn_cv_ba = knn_cv_res$Balanced_Accuracy
@@ -654,7 +680,7 @@ knn_cv_ba
 #knn_cross_val$resample$Accuracy
 ```
 
-The best K that maximizes our accuracy is K = 18. The results of the average accuracy from our cross-validation using K = 18 is 0.6317459. We also get a f1 score of 0.745829 and a balanced accuracy of 0.5599292. We could use this value (K=18) for our test set.
+The best K that maximizes our accuracy and at the same time balanced accuracy is K = 18. The results of the average accuracy from our cross-validation using K = 18 is 0.6317459. We also get a f1 score of 0.745829 and a balanced accuracy of 0.5599292. We could use this value (K=18) for our test set.
 
 ```{r}
 set.seed(1)
@@ -681,7 +707,7 @@ Comparing the Accuracy using knn with the average accuracy of 5 fold cross-valid
 ```{r}
 colours = c("#599ad3", "#f9a65a")
 res_knn = data.frame("Accuracy" = c(knn_cv_acc, accuracy_knn), "Sets"=c("avg cross-validation","test"))
-ggplot(res_knn, aes(x=Sets, y=Accuracy, fill = Sets)) + geom_bar(stat = "identity") + labs(title = "Accuracy CV using training set VS test set") + scale_fill_manual(values = colours) + geom_text(mapping= aes(x = Sets, y=Accuracy,label = round(Accuracy,4)), vjust=-0.5, size = 2, col = "red")
+ggplot(res_knn, aes(x=Sets, y=Accuracy, fill = Sets)) + geom_bar(stat = "identity") + labs(title = "Average CV Accuracy VS test set") + scale_fill_manual(values = colours) + geom_text(mapping= aes(x = Sets, y=Accuracy,label = round(Accuracy,4)), vjust=-0.5, size = 2, col = "red")
 ```
 
 As we can see, the accuracy of the average 5 folds cross-validation performed on our training set is very close to our test set. Therefore, we do not think that we are overfitting since the accuracy is quite similar for both situations and even bigger for the test set.
