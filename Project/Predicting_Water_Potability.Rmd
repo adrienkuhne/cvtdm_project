@@ -539,7 +539,7 @@ By dropping our missing values, the decision tree using 5 folds cross-validation
 ```{r}
 results_cv_impute = data.frame("Accuracy" = c(accu1, med_acc, knn_acc, drop_acc), "F1 Score" = c(f11, med_f1, knn_f1, drop_f1),"Balanced_Accuracy"=c(ba1, med_ba, knn_ba, drop_ba) ,"Method" = c("No dropping","Median imputation","K-NN imputation","Dropping the NAs"))
 
-results_cv_impute %>% gather(Attributes, Values, 1:3) %>% ggplot(aes(x = reorder(Attributes,-Values), y = Values, fill = Method,group = Values)) + scale_fill_viridis_d() + geom_bar(stat = "identity",position = "dodge", color = "white") + geom_text(mapping= aes(x = Attributes, y=Values,label = round(Values,4)), vjust=-0.5, size = 2,position = position_dodge(width = .9), col = "red") + labs(title = "Comparison of the imputation methods to deal with the NAs", x = "Metrics") + theme_light()
+results_cv_impute %>% gather(Attributes, Values, 1:3) %>% ggplot(aes(x = reorder(Attributes,-Values), y = Values, fill = Method,group = Values)) + scale_fill_viridis_d() + geom_bar(stat = "identity",position = "dodge", color = "white") + geom_text(mapping= aes(x = Attributes, y=Values,label = round(Values,4)), vjust=-0.5, size = 3,position = position_dodge(width = .9), col = "red") + labs(title = "Comparison of the imputation methods to deal with the NAs", x = "Metrics") + theme_light()
 ```
 
 These results are the best we can do for the accuracy, balanced accuracy and for the F1 score for each models. We then took the maximum of each of each imputation method to compare.
@@ -618,13 +618,13 @@ trihalomethanes_group = melt(trihalomethanes_group)
 diff_triha = ggplot(trihalomethanes_group, aes(x=value, group = variable, fill = variable)) + geom_density(alpha = 0.5)+labs(title = "Distribution of Trihalomethanes with and without K-NN imputation") + scale_fill_manual(values = c("red","blue"))
 ```
 
-```{r, fig.width= 10, fig.height=8}
+```{r, fig.width= 10, fig.height=5}
 plot_grid(diff_ph, diff_sulfate, diff_triha)
 ```
 
 The distribution does not really change except for 'Sulfate' variable where we had 25% of missing values. In general, our distribution becomes a bit more centered but the impact does not seem that important. It respected the distribution of our variables.
 
-```{r, fig.width= 10, fig.height=8}
+```{r, fig.width= 10, fig.height=5}
 diff_ph_violin = ggplot(ph_group, aes(x=variable, group = variable, fill = variable, y = value)) + geom_violin(alpha = 0.5)+labs(title = "Distribution of ph with and without K-NN imputation") + scale_fill_manual(values = c("red","blue"))
 
 diff_sulfate_violin = ggplot(sulfate_group, aes(x=variable, group = variable, fill = variable, y = value)) + geom_violin(alpha = 0.5)+labs(title = "Distribution of Sulfate with and without K-NN imputation") + scale_fill_manual(values = c("red","blue"))
@@ -682,6 +682,12 @@ knn_cv_ba
 
 The best K that maximizes our accuracy and at the same time balanced accuracy is K = 18. The results of the average accuracy from our cross-validation using K = 18 is 0.6317459. We also get a f1 score of 0.745829 and a balanced accuracy of 0.5599292. We could use this value (K=18) for our test set.
 
+Grid search
+```{r}
+knn_grid = knn_cross_val$results
+ggplot(knn_grid,aes(x=k, y = Accuracy))+ geom_point() + geom_line() + geom_vline(aes(xintercept =knn_cross_val$results[max(knn_cross_val$results$Accuracy) == knn_cross_val$results$Accuracy,"k"] , col="Highest accuracy")) + labs(title ="CV accuracy VS K")
+```
+
 ```{r}
 set.seed(1)
 library(class)
@@ -707,7 +713,7 @@ Comparing the Accuracy using knn with the average accuracy of 5 fold cross-valid
 ```{r}
 colours = c("#599ad3", "#f9a65a")
 res_knn = data.frame("Accuracy" = c(knn_cv_acc, accuracy_knn), "Sets"=c("avg cross-validation","test"))
-ggplot(res_knn, aes(x=Sets, y=Accuracy, fill = Sets)) + geom_bar(stat = "identity") + labs(title = "Average CV Accuracy VS test set") + scale_fill_manual(values = colours) + geom_text(mapping= aes(x = Sets, y=Accuracy,label = round(Accuracy,4)), vjust=-0.5, size = 2, col = "red")
+ggplot(res_knn, aes(x=Sets, y=Accuracy, fill = Sets)) + geom_bar(stat = "identity") + labs(title = "Average CV Accuracy VS test set") + scale_fill_manual(values = colours) + geom_text(mapping= aes(x = Sets, y=Accuracy,label = round(Accuracy,4)), vjust=-0.5, size = 3, col = "red")
 ```
 
 As we can see, the accuracy of the average 5 folds cross-validation performed on our training set is very close to our test set. Therefore, we do not think that we are overfitting since the accuracy is quite similar for both situations and even bigger for the test set.
@@ -750,13 +756,7 @@ The max average accuracy we get from the 5 fold CV is 0.6332545. we also get a b
 ggplot(tree_cv_res,aes(x=cp, y = Accuracy))+ geom_point() + geom_line() + geom_vline(aes(xintercept = 0.007010067, col="Highest accuracy")) + labs(title ="CV accuracy VS CP values")
 ```
 
-```{r}
-set.seed(1)
-new_tree = rpart(Potability ~ . , data=train_scaled_back, method = "class", control=rpart.control(maxdepth=30,cp=0.007010067, minsplit = 1,minbucket = 1)) 
 
-confusionMatrix(predict(new_tree, test_scaled_back, type = "class"), test_scaled_back$Potability, positive = "1")
-confusionMatrix(predict(new_tree, train_scaled_back, type = "class"), train_scaled_back$Potability, positive = "1")
-```
 
 ```{r}
 set.seed(1)
@@ -780,7 +780,7 @@ fourfoldplot(confusion_tree$table ,color = c("#CC6666", "#99CC99"),
 ```{r}
 library(rattle)
 
-fancyRpartPlot(new_tree)
+fancyRpartPlot(new_tree, palettes = "YlOrRd",cex=0.5, type = 1)
 ```
 
 Looking at the tree, it seems that the 'Sulfate' parameter is the most important variable followed by 'Hardness' and 'Trihalomethanes' because they are the first ones to start the split of our data.
@@ -791,7 +791,7 @@ With a decision tree, we obtain an accuracy of 0.6298, which is better than with
 ```{r}
 colours = c("#599ad3", "#f9a65a")
 tree_res = data.frame("Accuracy" = c(cv_tree_acc, accuracy_tree), "Sets"=c("CV Average","test set"))
-ggplot(tree_res, aes(x=Sets, y=Accuracy, fill = Sets)) + geom_bar(stat = "identity") + labs(title = "Average CV Accuracy VS test set") + scale_fill_manual(values = colours) + geom_text(mapping= aes(x = Sets, y=Accuracy,label = round(Accuracy,4)), vjust=-0.5, size = 2, col = "red")
+ggplot(tree_res, aes(x=Sets, y=Accuracy, fill = Sets)) + geom_bar(stat = "identity") + labs(title = "Average CV Accuracy VS test set") + scale_fill_manual(values = colours) + geom_text(mapping= aes(x = Sets, y=Accuracy,label = round(Accuracy,4)), vjust=-0.5, size = 3, col = "red")
 ```
 
 
@@ -837,8 +837,8 @@ Plotting the performance of NB :
 
 ```{r}
 colours = c("#599ad3", "#f9a65a")
-nb_res = data.frame("Accuracy" = c(nb_cv_acc, accuracy_nb), "Sets"=c("Avg 5 fold CV train","test"))
-ggplot(nb_res, aes(x=Sets, y=Accuracy, fill = Sets)) + geom_bar(stat = "identity") + labs(title = "Accuracy CV using training set VS test set") + scale_fill_manual(values = colours) + geom_text(mapping= aes(x = Sets, y=Accuracy,label = round(Accuracy,4)), vjust=-0.5, size = 2, col = "red")
+nb_res = data.frame("Accuracy" = c(nb_cv_acc, accuracy_nb), "Sets"=c("Avg 5 fold CV","test"))
+ggplot(nb_res, aes(x=Sets, y=Accuracy, fill = Sets)) + geom_bar(stat = "identity") + labs(title = "Average CV Accuracy VS test set") + scale_fill_manual(values = colours) + geom_text(mapping= aes(x = Sets, y=Accuracy,label = round(Accuracy,4)), vjust=-0.5, size = 3, col = "red")
 ```
 
 We get the same results on our test set whether we use Naives bayes cross-validation or simply Naives bayes since there no parameter to tune (I tried it). We see that when we perform the cross-validation, we get better result on our test data than on our 5 fold average accuracy. So, here we don't have a problem of overfitting.
@@ -863,6 +863,12 @@ print(boosted_cv)
 
 The largest value of accuracy (0.634280) was used to select the optimal model. We get also the highest f1 score : 0.7264 and a balanced accuracy of 0.588696
 The final values and method used for the model were respectively nIter (200 trees) and Adaboost.M1.
+
+```{r}
+boost_grid = boosted_cv$results
+ggplot(boost_grid,aes(x=nIter, y = Accuracy))+ geom_point() + geom_line() + geom_vline(aes(xintercept = boost_grid[boost_grid$Accuracy == max(boost_grid$Accuracy), "nIter"], col="Highest accuracy")) + labs(title ="Boosting CV accuracy VS Number of trees", x = "Number of trees")
+```
+
 
 ```{r}
 set.seed(1)
@@ -906,8 +912,8 @@ We can see that 'Sulfate', 'ph' and 'Hardness' are the 3 most important variable
 
 ```{r}
 colours = c("#599ad3", "#f9a65a")
-boost_res = data.frame("Accuracy" = c(cv_boost_acc, accuracy_boost), "Sets"=c("Avg 5 fold CV train","test"))
-ggplot(boost_res, aes(x=Sets, y=Accuracy, fill = Sets)) + geom_bar(stat = "identity") + labs(title = "Average CV Accuracy VS test set") + scale_fill_manual(values = colours) + geom_text(mapping= aes(x = Sets, y=Accuracy,label = round(Accuracy,4)), vjust=-0.5, size = 2, col = "red")
+boost_res = data.frame("Accuracy" = c(cv_boost_acc, accuracy_boost), "Sets"=c("Avg 5 fold CV","test"))
+ggplot(boost_res, aes(x=Sets, y=Accuracy, fill = Sets)) + geom_bar(stat = "identity") + labs(title = "Average CV Accuracy VS test set") + scale_fill_manual(values = colours) + geom_text(mapping= aes(x = Sets, y=Accuracy,label = round(Accuracy,4)), vjust=-0.5, size = 3, col = "red")
 ```
 
 ### Bagging
@@ -932,6 +938,12 @@ cv_bagged_ba = bagged_cv$results$Balanced_Accuracy[3]
 
 Using AdaBag : bagging method  where we can tune the number of trees and the depth of the tree. I have let the maxdepth constant at 30  and I runned this cv method on 50,100,150 and 200 tree. I got the best accuracy, balanced accuracy and F1 score when the final number of trees were 150.
 The avg accuracy of the 5 folds cross-validation is equal to 0.6597215 (using 150 trees), f1 0.7548989, balanced accuracy 0.6033343
+
+```{r}
+bagged_cv_res = bagged_cv$results
+ggplot(bagged_cv_res,aes(x=mfinal, y = Accuracy))+ geom_point() + geom_line() + geom_vline(aes(xintercept = bagged_cv_res[bagged_cv_res$Accuracy == max(bagged_cv_res$Accuracy), "mfinal"], col="Highest accuracy")) + labs(title ="Bagging CV accuracy VS Number of trees", x = "Number of trees")
+```
+
 
 Implementing our bagging tree : 
 ```{r}
@@ -962,15 +974,15 @@ bagging_tree$importance
 
 important_var_bag = data.frame(importance = bagging_tree$importance)
 important_var_bag$name = rownames(important_var_bag)
-important_bag = ggplot(important_var_bag, aes(x=reorder(name, -importance), y = importance, fill = importance)) + geom_bar(stat = "identity") +theme(axis.text.x = element_text(angle=90, vjust=0.6)) + labs(title = "Importance of our variables in the bagging model", x ="Variables")
-important_boost + scale_fill_viridis_c(option = "magma")
+important_bag = ggplot(important_var_bag, aes(x=reorder(name, -importance), y = importance, fill = importance)) + geom_bar(stat = "identity") +theme(axis.text.x = element_text(angle=90, vjust=0.6)) + labs(title = "Importance of our variables in the bagging model", x ="Variables") + scale_fill_viridis_c(option = "magma")
+important_bag
 ```
 
 
 ```{r}
 colours = c("#599ad3", "#f9a65a")
 bag_res = data.frame("Accuracy" = c(cv_bagged_acc, accuracy_bag), "Sets"=c("Avg 5 fold CV","test"))
-ggplot(bag_res, aes(x=Sets, y=Accuracy, fill = Sets)) + geom_bar(stat = "identity") + labs(title = "Average CV Accuracy VS test set") + scale_fill_manual(values = colours) + geom_text(mapping= aes(x = Sets, y=Accuracy,label = round(Accuracy,4)), vjust=-0.5, size = 2, col = "red")
+ggplot(bag_res, aes(x=Sets, y=Accuracy, fill = Sets)) + geom_bar(stat = "identity") + labs(title = "Average CV Accuracy VS test set") + scale_fill_manual(values = colours) + geom_text(mapping= aes(x = Sets, y=Accuracy,label = round(Accuracy,4)), vjust=-0.5, size = 3, col = "red")
 ```
 
 We obtain an accuracy of 0.6504 and a balanced accuracy of 0.56914 It is improving.
@@ -1001,6 +1013,11 @@ print(rf_gridsearch)
 
 When we perform a cross-validation on random forest using the scaled back data, we obtain that the best mtry to use is 6. We find an accuracy equal to 0.6597099, f1 score 0.7537916 and balanced accuracy of 0.6026116 (which is the best possible)
 
+```{r}
+rf_gridsearch_res = rf_gridsearch$results
+ggplot(rf_gridsearch_res,aes(x=mtry, y = Accuracy))+ geom_point() + geom_line() + geom_vline(aes(xintercept = rf_gridsearch_res[rf_gridsearch_res$Accuracy == max(rf_gridsearch_res$Accuracy), "mtry"], col="Highest accuracy")) + labs(title ="Random Forest CV accuracy VS mtry", x = "mtry")
+```
+
 (default value : 500 trees)
 ```{r}
 library(randomForest)
@@ -1030,8 +1047,8 @@ We can note that the 3 most important variables are 'ph', 'Sulfate' and 'Hardnes
 
 ```{r}
 colours = c("#599ad3", "#f9a65a")
-rf_res = data.frame("Accuracy" = c(rf_cv_acc, accuracy_rf), "Sets"=c("Avg 5 fold CV train","test"))
-ggplot(rf_res, aes(x=Sets, y=Accuracy, fill = Sets)) + geom_bar(stat = "identity") + labs(title = "Accuracy CV using training set VS test set") + scale_fill_manual(values = colours) + geom_text(mapping= aes(x = Sets, y=Accuracy,label = round(Accuracy,4)), vjust=-0.5, size = 2, col = "red")
+rf_res = data.frame("Accuracy" = c(rf_cv_acc, accuracy_rf), "Sets"=c("Avg 5 fold CV","test"))
+ggplot(rf_res, aes(x=Sets, y=Accuracy, fill = Sets)) + geom_bar(stat = "identity") + labs(title = "Random Forest : Average CV Accuracy VS test set") + scale_fill_manual(values = colours) + geom_text(mapping= aes(x = Sets, y=Accuracy,label = round(Accuracy,4)), vjust=-0.5, size = 3, col = "red")
 ```
 
 #### Logistic Regression
@@ -1061,6 +1078,8 @@ pred.logit.reg = predict(logi_cv, test_scaled_back[,-10], type = "prob")[,2]
 logi_pred_class = predict(logi_cv, test_scaled_back[,-10], type = "raw")
 confusion_logi = confusionMatrix(predict(logi_cv, test_scaled_back), test_scaled_back$Potability, positive = "1")
 confusion_logi
+fourfoldplot(confusion_logi$table ,color = c("#CC6666", "#99CC99"),
+              main = "Logistic Regression Confusion Matrix on Test set")
 accuracy_logi = confusion_logi$overall["Accuracy"]
 f1_logi = confusion_logi$byClass["F1"]
 ba_logi = confusion_logi$byClass["Balanced Accuracy"]
@@ -1115,8 +1134,8 @@ It is clearly not very good. We are doing as good as the baseline (the naive rul
 
 ```{r}
 colours = c("#599ad3", "#f9a65a")
-logi_res = data.frame("Accuracy" = c(logi_cv_acc, accuracy_logi), "Sets"=c("Avg 5 fold CV train","test"))
-ggplot(logi_res, aes(x=Sets, y=Accuracy, fill = Sets)) + geom_bar(stat = "identity") + labs(title = "Accuracy CV using training set VS test set") + scale_fill_manual(values = colours) + geom_text(mapping= aes(x = Sets, y=Accuracy,label = round(Accuracy,4)), vjust=-0.5, size = 2, col = "red")
+logi_res = data.frame("Accuracy" = c(logi_cv_acc, accuracy_logi), "Sets"=c("Avg 5 fold CV","test"))
+ggplot(logi_res, aes(x=Sets, y=Accuracy, fill = Sets)) + geom_bar(stat = "identity") + labs(title = "Logistic Regression : Average CV Accuracy VS test set") + scale_fill_manual(values = colours) + geom_text(mapping= aes(x = Sets, y=Accuracy,label = round(Accuracy,4)), vjust=-0.5, size = 3, col = "red")
 ```
 
 #### Neural nets.
@@ -1165,8 +1184,8 @@ We find an accuracy equal to 0.6855. It is the best coefficient that we have see
 
 ```{r}
 colours = c("#599ad3", "#f9a65a")
-nn_res = data.frame("Accuracy" = c(nn_cv_acc, accuracy_nn), "Sets"=c("Avg 5 fold CV train","test"))
-ggplot(nn_res, aes(x=Sets, y=Accuracy, fill = Sets)) + geom_bar(stat = "identity") + labs(title = "Accuracy CV using training set VS test set") + scale_fill_manual(values = colours) + geom_text(mapping= aes(x = Sets, y=Accuracy,label = round(Accuracy,4)), vjust=-0.5, size = 2, col = "red")
+nn_res = data.frame("Accuracy" = c(nn_cv_acc, accuracy_nn), "Sets"=c("Avg 5 fold CV","test"))
+ggplot(nn_res, aes(x=Sets, y=Accuracy, fill = Sets)) + geom_bar(stat = "identity") + labs(title = "Neural Net : Average CV Accuracy VS test set") + scale_fill_manual(values = colours) + geom_text(mapping= aes(x = Sets, y=Accuracy,label = round(Accuracy,4)), vjust=-0.5, size = 3, col = "red")
 ```
 
 #### Another attempt with more hidden layers to try and improve our neural net method:
@@ -1188,6 +1207,7 @@ ggplot(nn_res, aes(x=Sets, y=Accuracy, fill = Sets)) + geom_bar(stat = "identity
 #              summaryFunction = multiClassSummary)
  #           )
 #nn_test
+plot(neural.net_cv)
 ```
 
 Using more hidden layers (more than 1) made bad results. The best accuracy was 0.6098 (Naive rule !). So we will stick to only one layers ! 
@@ -1198,14 +1218,14 @@ Using more hidden layers (more than 1) made bad results. The best accuracy was 0
 accuracy_all = data.frame("Model" = 
                             c("K-NN","Naive-Bayes","logistic","Decision_tree","Bagging","Boosting","Random_forest","Neural_nets"),
                           "Accuracy"=c(accuracy_knn, accuracy_nb, accuracy_logi, accuracy_tree, accuracy_bag, accuracy_boost, accuracy_rf, accuracy_nn), "Balanced_Accuracy"=c(ba_knn, ba_nb, ba_logi, ba_tree, ba_bag, ba_boost, ba_rf, ba_nn))
-ggplot(accuracy_all, aes(x=reorder(Model, -Accuracy), y = Accuracy, fill = Accuracy)) + geom_bar(width = 0.8,stat="identity") + scale_fill_viridis_c(option = "plasma") + geom_text(mapping= aes(x = Model, y=Accuracy,label = round(Accuracy,4)), vjust=-0.5, size = 2, col = "red") + labs(title = "Accuracy of our models on the Test set")  + theme_pubr()+theme(axis.text.x = element_text(angle=90, vjust=1))
+ggplot(accuracy_all, aes(x=reorder(Model, -Accuracy), y = Accuracy, fill = Accuracy)) + geom_bar(width = 0.8,stat="identity") + scale_fill_viridis_c(option = "plasma") + geom_text(mapping= aes(x = Model, y=Accuracy,label = round(Accuracy,4)), vjust=-0.5, size = 3, col = "red") + labs(title = "Accuracy of our models on the Test set", x = "Models")  + theme_pubr()+theme(axis.text.x = element_text(angle=90, vjust=1))
 ```
 
 We can see that the best model for a higher accuracy was Neural net followed by random forest then bagging.
 
 Now looking at balanced accuracy : 
 ```{r}
-ggplot(accuracy_all, aes(x=reorder(Model, -Balanced_Accuracy), y = Balanced_Accuracy, fill = Balanced_Accuracy)) + geom_bar(width = 0.8,stat="identity") + scale_fill_viridis_c(option = "plasma") + geom_text(mapping= aes(x = Model, y=Balanced_Accuracy,label = round(Balanced_Accuracy,4)), vjust=-0.5, size = 2, col = "red") + labs(title = "Balanced Accuracy of our models on the Test set", x = "Models",y="Balanced Accuracy") + theme_classic2() + theme(axis.text.x = element_text(angle=90, vjust=1)) 
+ggplot(accuracy_all, aes(x=reorder(Model, -Balanced_Accuracy), y = Balanced_Accuracy, fill = Balanced_Accuracy)) + geom_bar(width = 0.8,stat="identity") + scale_fill_viridis_c(option = "plasma") + geom_text(mapping= aes(x = Model, y=Balanced_Accuracy,label = round(Balanced_Accuracy,4)), vjust=-0.5, size = 3, col = "red") + labs(title = "Balanced Accuracy of our models on the Test set", x = "Models",y="Balanced Accuracy") + theme_classic2() + theme(axis.text.x = element_text(angle=90, vjust=1)) 
 ```
 
 Here we can see the difference in Balanced Accuracy across our models. We see that Random forest is the best but is close to neural net. Boosting didn't do that bad. Indeed, since boosting is working on the wrong classification it did improve in classifying the potable water.
@@ -1249,6 +1269,15 @@ confu_avg_proba
 ```
 
 ```{r}
+fourfoldplot(confu_majority$table ,color = c("#CC6666", "#99CC99"),
+              main = "Ensemble Majority Confusion Matrix on Test set")
+fourfoldplot(confu_avg_proba$table ,color = c("#CC6666", "#99CC99"),
+              main = "Ensemble Probability Confusion Matrix on Test set")
+
+```
+
+
+```{r}
 acc_majority = confu_majority$overall["Accuracy"]
 f1_majority = confu_majority$byClass["F1"]
 ba_majority = confu_majority$byClass["Balanced Accuracy"]
@@ -1258,13 +1287,13 @@ ba_avg_proba = confu_avg_proba$byClass["Balanced Accuracy"]
 
 ensemble_df = data.frame("Accuracy"=c(acc_majority,acc_avg_proba),"Balanced_Accuracy" = c(ba_majority, ba_avg_proba), "F1" = c(f1_majority, f1_avg_proba),"Ensemble"=c("Majority","Average Proba"))
 
-ggplot(ensemble_df, aes(x = Ensemble, y=Accuracy, fill = Ensemble)) + geom_bar(stat="identity") + geom_text(mapping= aes(x = Ensemble, y=Accuracy,label = round(Accuracy,4)), vjust=-0.5, size = 2, col = "red") + labs(title = "Accuracy of our Ensemble models on the Test set") + theme_bw()
+ggplot(ensemble_df, aes(x = Ensemble, y=Accuracy, fill = Ensemble)) + geom_bar(stat="identity") + geom_text(mapping= aes(x = Ensemble, y=Accuracy,label = round(Accuracy,4)), vjust=-0.5, size = 3, col = "red") + labs(title = "Accuracy of our Ensemble models on the Test set") + theme_bw()
 ```
 
 Plots of our ensemble methods : 
 
 ```{r}
-ggplot(ensemble_df, aes(x = Ensemble, y=Balanced_Accuracy, fill = Ensemble)) + geom_bar(stat="identity") + geom_text(mapping= aes(x = Ensemble, y=Balanced_Accuracy,label = round(Balanced_Accuracy,4)), vjust=-0.5, size = 2, col = "red") + labs(title = "Balanced Accuracy of our Ensemble models on the Test set") + theme_bw()
+ggplot(ensemble_df, aes(x = Ensemble, y=Balanced_Accuracy, fill = Ensemble)) + geom_bar(stat="identity") + geom_text(mapping= aes(x = Ensemble, y=Balanced_Accuracy,label = round(Balanced_Accuracy,4)), vjust=-0.5, size = 3, col = "red") + labs(title = "Balanced Accuracy of our Ensemble models on the Test set") + theme_bw()
 ```
 
 
