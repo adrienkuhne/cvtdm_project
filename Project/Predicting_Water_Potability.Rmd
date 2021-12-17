@@ -712,8 +712,9 @@ Comparing the Accuracy using knn with the average accuracy of 5 fold cross-valid
 
 ```{r}
 colours = c("#599ad3", "#f9a65a")
-res_knn = data.frame("Accuracy" = c(knn_cv_acc, accuracy_knn), "Sets"=c("avg cross-validation","test"))
+res_knn = data.frame("Accuracy" = c(knn_cv_acc, accuracy_knn),"Balanced_Accuracy" = c(knn_cv_ba, ba_knn), "Sets"=c("Avg 5-fold CV","test"))
 ggplot(res_knn, aes(x=Sets, y=Accuracy, fill = Sets)) + geom_bar(stat = "identity") + labs(title = "Average CV Accuracy VS test set") + scale_fill_manual(values = colours) + geom_text(mapping= aes(x = Sets, y=Accuracy,label = round(Accuracy,4)), vjust=-0.5, size = 3, col = "red")
+res_knn %>% gather(Attributes, Values, 1:2) %>% ggplot(aes(x =Attributes, y = Values, fill = Sets ,group = Sets)) + geom_bar(stat = "identity",position = "dodge", color = "white") + geom_text(mapping= aes(x = Attributes, y=Values,label = round(Values,4)), vjust=-0.5, size = 3,position = position_dodge(width = .9), col = "red") + labs(title = "KNN : Average CV Accuracy and Balanced Accuracy VS test set", x = "Metrics", y = "Value") + theme_light() + scale_fill_manual(values = colours)
 ```
 
 As we can see, the accuracy of the average 5 folds cross-validation performed on our training set is very close to our test set. Therefore, we do not think that we are overfitting since the accuracy is quite similar for both situations and even bigger for the test set.
@@ -790,8 +791,10 @@ With a decision tree, we obtain an accuracy of 0.6298, which is better than with
 
 ```{r}
 colours = c("#599ad3", "#f9a65a")
-tree_res = data.frame("Accuracy" = c(cv_tree_acc, accuracy_tree), "Sets"=c("CV Average","test set"))
+tree_res = data.frame("Accuracy" = c(cv_tree_acc, accuracy_tree),"Balanced_Accuracy" = c(cv_tree_ba, ba_tree), "Sets"=c("5 fold-CV Average","test set"))
 ggplot(tree_res, aes(x=Sets, y=Accuracy, fill = Sets)) + geom_bar(stat = "identity") + labs(title = "Average CV Accuracy VS test set") + scale_fill_manual(values = colours) + geom_text(mapping= aes(x = Sets, y=Accuracy,label = round(Accuracy,4)), vjust=-0.5, size = 3, col = "red")
+
+tree_res %>% gather(Attributes, Values, 1:2) %>% ggplot(aes(x =Attributes, y = Values, fill = Sets ,group = Sets)) + geom_bar(stat = "identity",position = "dodge", color = "white") + geom_text(mapping= aes(x = Attributes, y=Values,label = round(Values,4)), vjust=-0.5, size = 3,position = position_dodge(width = .9), col = "red") + labs(title = "Decision tree : Average CV Accuracy and Balanced Accuracy VS test set", x = "Metrics", y = "Value") + theme_light() + scale_fill_manual(values = colours)
 ```
 
 
@@ -837,8 +840,11 @@ Plotting the performance of NB :
 
 ```{r}
 colours = c("#599ad3", "#f9a65a")
-nb_res = data.frame("Accuracy" = c(nb_cv_acc, accuracy_nb), "Sets"=c("Avg 5 fold CV","test"))
+nb_res = data.frame("Accuracy" = c(nb_cv_acc, accuracy_nb),"Balanced_Accuracy" = c(nb_cv_ba, ba_nb), "Sets"=c("Avg 5 fold CV","test"))
 ggplot(nb_res, aes(x=Sets, y=Accuracy, fill = Sets)) + geom_bar(stat = "identity") + labs(title = "Average CV Accuracy VS test set") + scale_fill_manual(values = colours) + geom_text(mapping= aes(x = Sets, y=Accuracy,label = round(Accuracy,4)), vjust=-0.5, size = 3, col = "red")
+
+nb_res %>% gather(Attributes, Values, 1:2) %>% ggplot(aes(x =Attributes, y = Values, fill = Sets ,group = Sets)) + geom_bar(stat = "identity",position = "dodge", color = "white") + geom_text(mapping= aes(x = Attributes, y=Values,label = round(Values,4)), vjust=-0.5, size = 3,position = position_dodge(width = .9), col = "red") + labs(title = "Naive Bayes : Average CV Accuracy and Balanced Accuracy⁄ VS test set", x = "Metrics",y = "Value") + theme_light() + scale_fill_manual(values = colours)
+
 ```
 
 We get the same results on our test set whether we use Naives bayes cross-validation or simply Naives bayes since there no parameter to tune (I tried it). We see that when we perform the cross-validation, we get better result on our test data than on our 5 fold average accuracy. So, here we don't have a problem of overfitting.
@@ -912,8 +918,11 @@ We can see that 'Sulfate', 'ph' and 'Hardness' are the 3 most important variable
 
 ```{r}
 colours = c("#599ad3", "#f9a65a")
-boost_res = data.frame("Accuracy" = c(cv_boost_acc, accuracy_boost), "Sets"=c("Avg 5 fold CV","test"))
+boost_res = data.frame("Accuracy" = c(cv_boost_acc, accuracy_boost),"Balanced_Accuracy" = c(cv_boost_ba, ba_boost), "Sets"=c("Avg 5 fold CV","test"))
 ggplot(boost_res, aes(x=Sets, y=Accuracy, fill = Sets)) + geom_bar(stat = "identity") + labs(title = "Average CV Accuracy VS test set") + scale_fill_manual(values = colours) + geom_text(mapping= aes(x = Sets, y=Accuracy,label = round(Accuracy,4)), vjust=-0.5, size = 3, col = "red")
+
+boost_res %>% gather(Attributes, Values, 1:2) %>% ggplot(aes(x =Attributes, y = Values, fill = Sets ,group = Sets)) + geom_bar(stat = "identity",position = "dodge", color = "white") + geom_text(mapping= aes(x = Attributes, y=Values,label = round(Values,4)), vjust=-0.5, size = 3,position = position_dodge(width = .9), col = "red") + labs(title = "Boosting : Average CV Accuracy and Balanced Accuracy VS test set", x = "Metrics", y = "Value") + theme_light() + scale_fill_manual(values = colours)
+
 ```
 
 ### Bagging
@@ -981,8 +990,11 @@ important_bag
 
 ```{r}
 colours = c("#599ad3", "#f9a65a")
-bag_res = data.frame("Accuracy" = c(cv_bagged_acc, accuracy_bag), "Sets"=c("Avg 5 fold CV","test"))
-ggplot(bag_res, aes(x=Sets, y=Accuracy, fill = Sets)) + geom_bar(stat = "identity") + labs(title = "Average CV Accuracy VS test set") + scale_fill_manual(values = colours) + geom_text(mapping= aes(x = Sets, y=Accuracy,label = round(Accuracy,4)), vjust=-0.5, size = 3, col = "red")
+bag_res = data.frame("Accuracy" = c(cv_bagged_acc, accuracy_bag),"Balanced_Accuracy" = c(cv_bagged_ba, ba_bag), "Sets"=c("Avg 5 fold CV","test"))
+ggplot(bag_res, aes(x=Sets, y=Accuracy, fill = Sets)) + geom_bar(stat = "identity") + labs(title = "Bagging : Average CV Accuracy VS test set") + scale_fill_manual(values = colours) + geom_text(mapping= aes(x = Sets, y=Accuracy,label = round(Accuracy,4)), vjust=-0.5, size = 3, col = "red")
+
+bag_res %>% gather(Attributes, Values, 1:2) %>% ggplot(aes(x =Attributes, y = Values, fill = Sets ,group = Sets)) + geom_bar(stat = "identity",position = "dodge", color = "white") + geom_text(mapping= aes(x = Attributes, y=Values,label = round(Values,4)), vjust=-0.5, size = 3,position = position_dodge(width = .9), col = "red") + labs(title = "Bagging : Average CV Accuracy and Balanced Accuracy VS test set", x = "Metrics", y = "Value") + theme_light() + scale_fill_manual(values = colours)
+
 ```
 
 We obtain an accuracy of 0.6504 and a balanced accuracy of 0.56914 It is improving.
@@ -1047,15 +1059,18 @@ We can note that the 3 most important variables are 'ph', 'Sulfate' and 'Hardnes
 
 ```{r}
 colours = c("#599ad3", "#f9a65a")
-rf_res = data.frame("Accuracy" = c(rf_cv_acc, accuracy_rf), "Sets"=c("Avg 5 fold CV","test"))
+rf_res = data.frame("Accuracy" = c(rf_cv_acc, accuracy_rf),"Balanced_Accuracy" = c(rf_cv_ba, ba_rf), "Sets"=c("Avg 5 fold CV","test"))
 ggplot(rf_res, aes(x=Sets, y=Accuracy, fill = Sets)) + geom_bar(stat = "identity") + labs(title = "Random Forest : Average CV Accuracy VS test set") + scale_fill_manual(values = colours) + geom_text(mapping= aes(x = Sets, y=Accuracy,label = round(Accuracy,4)), vjust=-0.5, size = 3, col = "red")
+
+rf_res %>% gather(Attributes, Values, 1:2) %>% ggplot(aes(x =Attributes, y = Values, fill = Sets ,group = Sets)) + geom_bar(stat = "identity",position = "dodge", color = "white") + geom_text(mapping= aes(x = Attributes, y=Values,label = round(Values,4)), vjust=-0.5, size = 3,position = position_dodge(width = .9), col = "red") + labs(title = "Random Forest : Average CV Accuracy and Balanced Accuracy VS test set", x = "Metrics", y = "Value") + theme_light() + scale_fill_manual(values = colours)
+
 ```
 
 #### Logistic Regression
 Here there's no hyperparameter tuning so we will be able to use this same CV model to predict the train set. (it gives same results)
 ```{r}
 set.seed(1)
-train_control = trainControl(method = "cv", number = 5)
+train_control = trainControl(method = "cv", number = 5,summaryFunction =  multiClassSummary)
 
 
 logi_cv = train(Potability ~.,
@@ -1071,9 +1086,11 @@ confusionMatrix(logi_cv)
 ```
 
 When we perform our logistic regression, we can see that no variables are significant (p-value > 0.05). We obtain an accuracy of 0.6108859 Here our model classifies almost all our classes as 0 since it's the predominant class. Unfortunately, it does not give us any useful information ! It's almost the naive rule (0.6108859 VS 0.6098). This model classified 0.1% of our data into 1 correctly. So we already know this model will be bad ! 
+balanced accuracy = 0.5013029
 
 ```{r}
 logi_cv_acc = logi_cv$results$Accuracy
+logi_cv_ba = logi_cv$results$Balanced_Accuracy
 pred.logit.reg = predict(logi_cv, test_scaled_back[,-10], type = "prob")[,2]
 logi_pred_class = predict(logi_cv, test_scaled_back[,-10], type = "raw")
 confusion_logi = confusionMatrix(predict(logi_cv, test_scaled_back), test_scaled_back$Potability, positive = "1")
@@ -1134,8 +1151,11 @@ It is clearly not very good. We are doing as good as the baseline (the naive rul
 
 ```{r}
 colours = c("#599ad3", "#f9a65a")
-logi_res = data.frame("Accuracy" = c(logi_cv_acc, accuracy_logi), "Sets"=c("Avg 5 fold CV","test"))
+logi_res = data.frame("Accuracy" = c(logi_cv_acc, accuracy_logi),"Balanced_Accuracy" = c(logi_cv_ba, ba_logi), "Sets"=c("Avg 5 fold CV","test"))
 ggplot(logi_res, aes(x=Sets, y=Accuracy, fill = Sets)) + geom_bar(stat = "identity") + labs(title = "Logistic Regression : Average CV Accuracy VS test set") + scale_fill_manual(values = colours) + geom_text(mapping= aes(x = Sets, y=Accuracy,label = round(Accuracy,4)), vjust=-0.5, size = 3, col = "red")
+
+logi_res %>% gather(Attributes, Values, 1:2) %>% ggplot(aes(x =Attributes, y = Values, fill = Sets ,group = Sets)) + geom_bar(stat = "identity",position = "dodge", color = "white") + geom_text(mapping= aes(x = Attributes, y=Values,label = round(Values,4)), vjust=-0.5, size = 3,position = position_dodge(width = .9), col = "red") + labs(title = "Logistic Regression : Average CV Accuracy and Balanced Accuracy VS test set", x = "Metrics", y = "Value") + theme_light() + scale_fill_manual(values = colours)
+
 ```
 
 #### Neural nets.
@@ -1152,10 +1172,12 @@ grid = expand.grid(size = seq(1:9), decay = seq(0,1,0.1))
 neural.net_cv <- train(Potability ~ ., data = train_scaled_back,
     method = "nnet",  trControl = control, preProcess = "range", tuneGrid = grid)
 
-neural.net_cv$bestTune
+neural.net_cv$bestTune # row nb 90
 neural.net_cv
 nn_cv_acc = max(neural.net_cv$results$Accuracy)
+nn_cv_ba = neural.net_cv$results[90,"Balanced_Accuracy"]
 confusionMatrix(neural.net_cv)
+
 ```
 
 The model we use : 
@@ -1184,8 +1206,11 @@ We find an accuracy equal to 0.6855. It is the best coefficient that we have see
 
 ```{r}
 colours = c("#599ad3", "#f9a65a")
-nn_res = data.frame("Accuracy" = c(nn_cv_acc, accuracy_nn), "Sets"=c("Avg 5 fold CV","test"))
+nn_res = data.frame("Accuracy" = c(nn_cv_acc, accuracy_nn),"Balanced_Accuracy" = c(nn_cv_ba, ba_nn), "Sets"=c("Avg 5 fold CV","test"))
 ggplot(nn_res, aes(x=Sets, y=Accuracy, fill = Sets)) + geom_bar(stat = "identity") + labs(title = "Neural Net : Average CV Accuracy VS test set") + scale_fill_manual(values = colours) + geom_text(mapping= aes(x = Sets, y=Accuracy,label = round(Accuracy,4)), vjust=-0.5, size = 3, col = "red")
+
+nn_res %>% gather(Attributes, Values, 1:2) %>% ggplot(aes(x =Attributes, y = Values, fill = Sets ,group = Sets)) + geom_bar(stat = "identity",position = "dodge", color = "white") + geom_text(mapping= aes(x = Attributes, y=Values,label = round(Values,4)), vjust=-0.5, size = 3,position = position_dodge(width = .9), col = "red") + labs(title = "Neural Net : Average CV Accuracy and Balanced Accuracy VS test set", x = "Metrics", y = "Value") + theme_light() + scale_fill_manual(values = colours)
+
 ```
 
 #### Another attempt with more hidden layers to try and improve our neural net method:
